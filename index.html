@@ -143,44 +143,89 @@
   </div>
 
   <script>
-    // 1. 初始化 MapLibre 地圖 (預設定位於南庄調查區全域)
+    // 1. 初始化 MapLibre 地圖
     const map = new maplibregl.Map({
       container: 'map',
       style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-      center: [121.03, 24.58], // 南庄鄉/中港溪上游經緯度
+      center: [121.03, 24.58],
       zoom: 10.8,
       pitch: 0
     });
 
     let currentPopup = null;
 
-    // 2. 定義精準的南庄地理座標與視角動作
+    // 2. 核心：非同步自動載入你的 JSON / GeoJSON 檔案庫
+    // 請確認你的 JSON 檔放在 GitHub 專案根目錄，或是 data/ 資料夾內
+    async function loadCustomGeoJSON(fileName, layerId, color, type = 'line') {
+      try {
+        const response = await fetch(`./data/${fileName}`);
+        if (!response.ok) {
+          // 如果沒有 data/ 子資料夾，嘗試直接從根目錄讀取
+          const rootResponse = await fetch(`./${fileName}`);
+          if (!rootResponse.ok) return;
+          var data = await rootResponse.json();
+        } else {
+          var data = await response.json();
+        }
+
+        map.addSource(layerId, {
+          type: 'geojson',
+          data: data
+        });
+
+        if (type === 'line') {
+          map.addLayer({
+            id: `${layerId}-layer`,
+            type: 'line',
+            source: layerId,
+            paint: {
+              'line-color': color,
+              'line-width': 2.5,
+              'line-opacity': 0.85
+            }
+          });
+        } else if (type === 'fill') {
+          map.addLayer({
+            id: `${layerId}-layer`,
+            type: 'fill',
+            source: layerId,
+            paint: {
+              'fill-color': color,
+              'fill-opacity': 0.4,
+              'fill-outline-color': '#000'
+            }
+          });
+        }
+      } catch (err) {
+        console.warn(`無法載入 JSON 檔案: ${fileName}`, err);
+      }
+    }
+
+    // 當地圖基礎圖層載入完畢後，開始讀取你的 GeoJSON 檔
+    map.on('load', () => {
+      // 這裡以常見的檔名為範例，系統會自動搜尋並顯示在右側地圖上
+      loadCustomGeoJSON('nanjiao_boundary.json', 'nanjiao-boundary', '#2c3e50', 'line');
+      loadCustomGeoJSON('forest_reservations.json', 'forest-reservations', '#27ae60', 'fill');
+      loadCustomGeoJSON('indigenous_lands.json', 'indigenous-lands', '#e67e22', 'fill');
+    });
+
+    // 3. 地理座標與視角動作
     const locations = {
-      // 全域與邊界山脈
       boundary: { center: [121.08, 24.52], zoom: 11.2, pitch: 50, bearing: 30, title: "南庄東側山脈界線", desc: "鵝公髻山、鳥嘴山、大窩山至鹿場大山之稜線。" },
-      
-      // 圖幅涵蓋範圍
       map1: { center: [121.12, 24.63], zoom: 11.5, pitch: 20, bearing: 0, title: "新第一號圖幅", desc: "底圖為《油羅山》（田尾第三號）。" },
       map2: { center: [121.08, 24.46], zoom: 11.5, pitch: 20, bearing: 0, title: "新第二號圖幅", desc: "底圖為《シルビヤ山》（田尾第四號）。" },
       map3: { center: [120.95, 24.58], zoom: 11.5, pitch: 20, bearing: 0, title: "新第三號圖幅", desc: "底圖為《苗栗》（苗栗第一號）。" },
-      
-      // 調查行政中心
       stats: { center: [120.998, 24.596], zoom: 12.5, pitch: 0, bearing: 0, title: "南庄區分調查中心", desc: "總調查面積 9,465.50 公頃，區分要存置 16筆、準要存置 31筆。" },
-
-      // 5大蕃社位置
       paagasan: { center: [120.975, 24.535], zoom: 13.0, pitch: 30, bearing: 0, title: "パアガサン社（八卦力社）", desc: "位於南庄警察分室南方、八卦力溪上游兩岸（188.21公頃）。" },
       waro: { center: [121.042, 24.608], zoom: 13.0, pitch: 35, bearing: -10, title: "ワロ社（瓦祿社/瓦祿溪畔）", desc: "位於中港溪上大東河溪右岸、鵝公髻山西南山腹（143.257公頃）。" },
       garawan: { center: [121.036, 24.588], zoom: 13.2, pitch: 40, bearing: 15, title: "ガラワン社（向天湖社）", desc: "位於向天湖西兩岸及柏色窩溪左岸山腹（241.025公頃）。" },
       chubusu: { center: [121.075, 24.562], zoom: 13.0, pitch: 45, bearing: 20, title: "チューブス社（鹿場社深山）", desc: "點介在大東河溪兩岸數所，位於蕃地最深處（134.625公頃）。" },
       amishi: { center: [120.988, 24.520], zoom: 13.0, pitch: 30, bearing: 0, title: "アミシ社（半奇社移住地）", desc: "位於八卦力溪支流半奇寮溪兩岸、加裡前山西向山腹（160公頃）。" },
-
-      // 歷史演變特有地標
       hengping: { center: [121.012, 24.615], zoom: 13.0, pitch: 25, bearing: 0, title: "橫屏背山原住地", desc: "原准要存置林野番號 19、20 所在地，因漢人無斷開墾紛爭於 1930 年解編。" },
       banqiliao: { center: [120.985, 24.522], zoom: 13.5, pitch: 30, bearing: 0, title: "半奇寮溪移住地（46之三）", desc: "アミシ社移住後之增編準要存置林野地。" },
       luchang: { center: [121.082, 24.551], zoom: 13.8, pitch: 50, bearing: 30, title: "鹿場警察官吏駐在所與鹿場埤圳", desc: "1931 年開墾埤圳供水田化，警務部門增設兩大塊保留地以利集團移住。" }
     };
 
-    // 3. 點擊/觸發滑鼠懸浮時運行的地圖跳躍函數
     function flyToLoc(key) {
       const target = locations[key];
       if (!target) return;
@@ -196,14 +241,13 @@
         essential: true
       });
 
-      // 於目標座標跳出歷史說明卡片
       currentPopup = new maplibregl.Popup({ closeOnClick: true, offset: 25 })
         .setLngLat(target.center)
         .setHTML(`<h3>${target.title}</h3><p>${target.desc}</p>`)
         .addTo(map);
     }
 
-    // 4. 設定 Scrollama 自動監聽滾動觸發
+    // 4. Scrollama 滾動監聽
     const stepMapActions = {
       0: () => flyToLoc('boundary'),
       1: () => flyToLoc('map1'),
