@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>森林計畫事業導讀 - 互動網頁</title>
+  <title>《日治時期森林計畫事業區分調查史料》解讀──以南庄調查區為例</title>
 
   <!-- 載入 MapLibre GL JS (免費開源地圖庫) -->
   <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -14,38 +14,65 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; color: #2c3e50; line-height: 1.8; background-color: #fdfbf7; }
+    body { font-family: "PingFang TC", "Microsoft JhengHei", serif; color: #2b2b2b; line-height: 1.95; background-color: #fcfaf7; }
 
-    /* 雙欄版面配置 */
+    /* 雙欄 layout */
     #container { display: flex; flex-direction: row; min-height: 100vh; }
-    #story { width: 45vw; padding: 10vh 4vw; z-index: 2; }
-    #map-container { width: 55vw; height: 100vh; position: sticky; top: 0; background: #e0e0e0; }
+    #story { width: 45vw; padding: 8vh 4vw; z-index: 2; }
+    #map-container { width: 55vw; height: 100vh; position: sticky; top: 0; background: #e5e3df; }
     #map { width: 100%; height: 100%; }
 
-    /* 文章滾動卡片樣式 */
+    /* 文章段落卡片 */
     .step {
-      margin-bottom: 75vh;
-      padding: 32px;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-      border-left: 6px solid #bdc3c7;
+      margin-bottom: 70vh;
+      padding: 36px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      border-left: 5px solid #d1c7bd;
       transition: all 0.3s ease;
     }
-    .step.is-active { border-left-color: #2c3e50; transform: scale(1.02); }
+    .step.is-active { border-left-color: #4a5d4e; transform: translateX(4px); }
 
-    /* 螢光筆對應動作樣式 */
-    .step.hl-yellow { border-left-color: #f1c40f; }
-    .step.hl-blue { border-left-color: #3498db; }
+    h1.main-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 8px; color: #1a2a1d; border-bottom: 2px solid #1a2a1d; padding-bottom: 12px; }
+    .author { font-size: 1.1rem; color: #666; margin-bottom: 36px; font-weight: 500; }
+    h2 { font-size: 1.3rem; margin-bottom: 14px; color: #2c3e50; }
+    p { font-size: 1.05rem; text-align: justify; margin-bottom: 12px; }
 
-    .marker-yellow { background-color: #fff3cd; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-    .marker-blue { background-color: #d1ecf1; color: #0c5460; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    /* --- 底線文字與 Hover 動態效果 --- */
+    .hover-trigger {
+      display: inline;
+      text-decoration: none;
+      border-bottom: 2.5px solid #2b580c; /* 深綠色底線 */
+      color: #1b3b09;
+      font-weight: 600;
+      cursor: pointer;
+      padding-bottom: 2px;
+      transition: all 0.25s ease-in-out;
+    }
+    
+    .hover-trigger:hover {
+      background-color: #f0f7ee;
+      border-bottom-color: #d9534f; /* 懸浮時轉為紅褐色底線 */
+      color: #8c1d18;
+    }
 
-    /* 手機版響應式設計 */
+    /* 地圖彈窗 Popup 樣式 */
+    .maplibregl-popup-content {
+      padding: 16px;
+      font-family: sans-serif;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 280px;
+    }
+    .maplibregl-popup-content h3 { font-size: 1.1rem; margin-bottom: 6px; color: #1a2a1d; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    .maplibregl-popup-content p { font-size: 0.92rem; margin: 0; line-height: 1.5; color: #444; }
+
+    /* 響應式手機版 */
     @media (max-width: 768px) {
       #container { flex-direction: column-reverse; }
       #story { width: 100vw; padding: 20px; }
-      #map-container { width: 100vw; height: 50vh; position: sticky; top: 0; }
+      #map-container { width: 100vw; height: 45vh; position: sticky; top: 0; }
     }
   </style>
 </head>
@@ -53,35 +80,62 @@
 <body>
   <div id="container">
     
-    <!-- 左側：論文故事欄 -->
+    <!-- 左側：論文全文內容 -->
     <div id="story">
       
-      <!-- Step 0: 前言導覽 -->
+      <h1 class="main-title">《日治時期森林計畫事業區分調查史料》解讀</h1>
+      <div class="author">──以南庄調查區為例 ／ 洪廣冀</div>
+
+      <!-- Step 0: 區域地理邊界 -->
       <div class="step" data-step="0">
-        <h2>重現日治時代臺灣山林空間</h2>
-        <p>「森林計畫事業」是日治時期總督府針對臺灣山區森林土地所進行的一項重要政策，其目的在於「調查、計畫、實測、管理與經營可供應林業資源的國有森林地」。</p>
+        <h2>一、南庄調查區的地理範圍</h2>
+        <p>南庄調查區，是最早展開區分調查工作的調查區，其區域位於中港溪上游，範圍東以<span class="hover-trigger" onclick="flyToLoc('boundary')">鵝公髻山、鳥嘴山、大窩山與鹿場大山的稜線</span>為界；西從橫屏山下小東溪，接上舊蕃界；南從鹿場大山通過家裡山的分水嶺（及竹南與大湖的界野）；北從鵝公髻山向西，通過北埔溪與大東河間鞍部至橫屏山。</p>
+        <p>此一地帶除了有竹苗漢人開墾而成的市街，大多數林土地為原住民的傳統生活領域，大東河上游為泰雅族之勢力範圍，大東河下游至南河則為賽夏族的勢力範圍，但隨著漢人開墾擴張，到了1920至1930年代，此區只剩下「パアガサン社」、「ワロ社」、「ガラワン社」、「チューブス社」、以及應移住至該園的「アミシ社」等五個蕃社。</p>
       </div>
 
-      <!-- Step 1: 黃色螢光筆 (彈出史料卡片) -->
-      <div class="step hl-yellow" data-step="1">
-        <h2>第一手史料檔案</h2>
-        <p>透過來自森林計畫區分調查的第一手史料，保留了包含：<span class="marker-yellow">區分調查圖資逾146幅、《要存置林野調書》38冊，以及《準要存置林野調書》34冊</span>。</p>
+      <!-- Step 1: 林野圖與底圖組合 -->
+      <div class="step" data-step="1">
+        <h2>二、史料構成：《林野圖》與《蕃地地形圖》</h2>
+        <p>森林計畫事業區分調查所產生的史料，包含《林野圖》及《林野調書》（土地臺帳）。《林野圖》是以總督府民政部警察本署製作、臺灣日日新報社發行的《蕃地地形圖》（5萬分1）為底圖，將區分結果以不同顏色或線條呈現於圖上。</p>
+        <p>例如，南庄調查區的範圍介於3張《蕃地地形圖》之間，其《林野圖》也必須由3張地圖來構成，其中<span class="hover-trigger" onclick="flyToLoc('map1')">〈新第一號〉的底圖是「油羅山」（田尾第三號）</span>，<span class="hover-trigger" onclick="flyToLoc('map2')">〈新第二號〉是「シルビヤ山」（田尾第四號）</span>，<span class="hover-trigger" onclick="flyToLoc('map3')">〈新第三號〉則是「苗栗」（苗栗第一號）</span>。</p>
+        <p>依據《林野圖》上的凡例，以綠色填滿的是「要存置林野」、橘色填滿的是「準要存置林野」、粉紅色填滿的是「不要存置林野」……黑色實體線是調查區的地域界線，而紅色實體線是一塊塊林地的分界線。</p>
       </div>
 
-      <!-- Step 2: 藍色螢光筆 (地圖定位與線段高亮) -->
-      <div class="step hl-blue" data-step="2">
-        <h2>山脈與林道分佈</h2>
-        <p>礁溪以西沿著<span class="marker-blue">ブスラン山脈的山巔（大小礁溪山、阿玉山至紅柴林之間的稜線）</span>景致有如「翠蓋沖天，宛如巨人之髮」，呈現了日治初期林政與空間治理的演變。</p>
+      <!-- Step 2: 林野調書與調查數據 -->
+      <div class="step" data-step="2">
+        <h2>三、《林野調書》與調查成果數據</h2>
+        <p>《林野調書》的封面上，寫有該調書所紀載的土地屬於何州何郡，並以紅色墨筆書寫調書編號。例如南庄調查區位於新竹州，其要存置林野調書便以〈新要第一號〉為編號；其準要存置林野調書則以〈新準第一號〉編號。</p>
+        <p>南庄調查區的調查期間為大正15年（1926）3月11日至5月6日，當中包含15天的現地調查；所調查的總面積總計為 9,465.50公頃，從中區分出<span class="hover-trigger" onclick="flyToLoc('stats')">要存置林野 16筆（8,614.23公頃），準要存置林野 31筆（833.27公頃），以及不要存置林野 2筆（18公頃）</span>，調書上署名的主持調查員是山林課技師黑澤慎介，負責執行調查的調查班長則是伊藤鐵兒。</p>
       </div>
 
+      <!-- Step 3: 五社蕃人所要地定位 -->
       <div class="step" data-step="3">
-        <h2>結語</h2>
-        <p>正因為有這些歷史圖資與調查，才讓研究者得以在「行政空間」與「林政空間」之外，重構 1920 年代原住民族的生活空間。</p>
+        <h2>四、五社蕃人所要地對照</h2>
+        <p>若將《蕃人所要地調查書》佐以對照，便可確知準要存置林野與蕃社之對應關係：</p>
+        <p>1. <span class="hover-trigger" onclick="flyToLoc('paagasan')">パアガサン社</span>：位於南庄警察分室之南方、八卦力溪上游兩岸，面積 188.21公頃。</p>
+        <p>2. <span class="hover-trigger" onclick="flyToLoc('waro')">ワロ社</span>：位於中港溪上大東河溪右岸、鵝公髻山西南向山腹，面積 143.257公頃。</p>
+        <p>3. <span class="hover-trigger" onclick="flyToLoc('garawan')">ガラワン社</span>：位於大東河溪支流向天湖西兩岸，以及向天湖溪支流柏色窩溪左岸之山腹，面積 241.025公頃。</p>
+        <p>4. <span class="hover-trigger" onclick="flyToLoc('chubusu')">チューブス社</span>：位於蕃地之最深處，點介在大東河溪兩岸數所，面積 134.625公頃。</p>
+        <p>5. <span class="hover-trigger" onclick="flyToLoc('amishi')">アミシ社</span>：位於八卦力溪之支流半奇寮溪兩岸、加裡前山之西向山腹，面積 160公頃。</p>
+      </div>
+
+      <!-- Step 4: アミシ社移住與番號解編 -->
+      <div class="step" data-step="4">
+        <h2>五、アミシ社的移住與保留地變遷</h2>
+        <p>在《林野圖》〈新第一號〉中，標記為番號 19與 20的西側，可找到<span class="hover-trigger" onclick="flyToLoc('hengping')">「橫屏社（アミシ）」</span>的字樣。大正15年（1926）調查時，アミシ社原住在橫屏背山一帶。</p>
+        <p>然而，因該地屢遭本島漢人「無斷開墾」，民蕃雜居釀成紛爭，昭和5年（1930）番號 19與20兩塊保留地被解編，アミシ社被移往至<span class="hover-trigger" onclick="flyToLoc('banqiliao')">小坪駐在所管轄範圍內的半奇寮溪兩岸（增編 46之三）</span>。移住後因耕地狹小、水田不足，隻能充當山林課植林作業的工人憑工資糊口。</p>
+      </div>
+
+      <!-- Step 5: チューブス社集團移住與鹿場埤圳 -->
+      <div class="step" data-step="5">
+        <h2>六、チューブス社與警務部門的介入</h2>
+        <p>チューブス社原散居於大東河溪兩岸。警務部門認為散居型態不利於「指導命令」，便於昭和3年（1931）10月在<span class="hover-trigger" onclick="flyToLoc('luchang')">鹿場警察官吏駐在所附近開墾「鹿場埤圳」</span>，提供 9 甲水田供其學習水田耕作，實施集團移住。</p>
+        <p>林野圖上鹿場駐在所一帶增設的兩大塊保留地，證實了理蕃事務所與地方州廳機關能夠改動山林課的區分成果，主導山林空間的重構。</p>
       </div>
 
     </div>
 
-    <!-- 右側：地圖欄 -->
+    <!-- 右側：地圖展示區 -->
     <div id="map-container">
       <div id="map"></div>
     </div>
@@ -89,88 +143,86 @@
   </div>
 
   <script>
-    // 1. 初始化免費的 MapLibre 地圖 (使用 Positron 淺色風格底圖)
+    // 1. 初始化 MapLibre 地圖 (預設定位於南庄調查區全域)
     const map = new maplibregl.Map({
       container: 'map',
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', // 免費極簡底圖
-      center: [120.98, 23.8], // 臺灣中心座標
-      zoom: 7.2,
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      center: [121.03, 24.58], // 南庄鄉/中港溪上游經緯度
+      zoom: 10.8,
       pitch: 0
     });
 
     let currentPopup = null;
 
-    // 2. 載入你的 GeoJSON 資料 (如果在 data/ 資料夾內有檔案)
-    map.on('load', () => {
-      /* 如果你有將 GeoJSON 上傳到 data/forest_roads.geojson，解除以下註解即可顯示線段：
-      map.addSource('roads', {
-        type: 'geojson',
-        data: './data/forest_roads.geojson'
-      });
+    // 2. 定義精準的南庄地理座標與視角動作
+    const locations = {
+      // 全域與邊界山脈
+      boundary: { center: [121.08, 24.52], zoom: 11.2, pitch: 50, bearing: 30, title: "南庄東側山脈界線", desc: "鵝公髻山、鳥嘴山、大窩山至鹿場大山之稜線。" },
+      
+      // 圖幅涵蓋範圍
+      map1: { center: [121.12, 24.63], zoom: 11.5, pitch: 20, bearing: 0, title: "新第一號圖幅", desc: "底圖為《油羅山》（田尾第三號）。" },
+      map2: { center: [121.08, 24.46], zoom: 11.5, pitch: 20, bearing: 0, title: "新第二號圖幅", desc: "底圖為《シルビヤ山》（田尾第四號）。" },
+      map3: { center: [120.95, 24.58], zoom: 11.5, pitch: 20, bearing: 0, title: "新第三號圖幅", desc: "底圖為《苗栗》（苗栗第一號）。" },
+      
+      // 調查行政中心
+      stats: { center: [120.998, 24.596], zoom: 12.5, pitch: 0, bearing: 0, title: "南庄區分調查中心", desc: "總調查面積 9,465.50 公頃，區分要存置 16筆、準要存置 31筆。" },
 
-      map.addLayer({
-        id: 'roads-layer',
-        type: 'line',
-        source: 'roads',
-        paint: {
-          'line-color': '#e74c3c',
-          'line-width': 3
-        }
-      });
-      */
-    });
+      // 5大蕃社位置
+      paagasan: { center: [120.975, 24.535], zoom: 13.0, pitch: 30, bearing: 0, title: "パアガサン社（八卦力社）", desc: "位於南庄警察分室南方、八卦力溪上游兩岸（188.21公頃）。" },
+      waro: { center: [121.042, 24.608], zoom: 13.0, pitch: 35, bearing: -10, title: "ワロ社（瓦祿社/瓦祿溪畔）", desc: "位於中港溪上大東河溪右岸、鵝公髻山西南山腹（143.257公頃）。" },
+      garawan: { center: [121.036, 24.588], zoom: 13.2, pitch: 40, bearing: 15, title: "ガラワン社（向天湖社）", desc: "位於向天湖西兩岸及柏色窩溪左岸山腹（241.025公頃）。" },
+      chubusu: { center: [121.075, 24.562], zoom: 13.0, pitch: 45, bearing: 20, title: "チューブス社（鹿場社深山）", desc: "點介在大東河溪兩岸數所，位於蕃地最深處（134.625公頃）。" },
+      amishi: { center: [120.988, 24.520], zoom: 13.0, pitch: 30, bearing: 0, title: "アミシ社（半奇社移住地）", desc: "位於八卦力溪支流半奇寮溪兩岸、加裡前山西向山腹（160公頃）。" },
 
-    // 3. 定義滾動到各步驟時的地圖動作
-    const stepActions = {
-      0: () => {
-        // 全臺俯瞰
-        if (currentPopup) currentPopup.remove();
-        map.flyTo({ center: [120.98, 23.8], zoom: 7.2, pitch: 0, duration: 1500 });
-      },
-      1: () => {
-        // 黃色螢光筆：在地圖上跳出史料統計卡片
-        if (currentPopup) currentPopup.remove();
-        currentPopup = new maplibregl.Popup({ closeOnClick: false })
-          .setLngLat([121.51, 25.04]) // 台北總督府/林業局位置
-          .setHTML('<h3>典藏圖資成果</h3><p>• 區分調查圖資：146 幅<br>• 要存置林野調書：38 冊<br>• 準要存置林野調書：34 冊</p>')
-          .addTo(map);
-        
-        map.flyTo({ center: [121.51, 25.04], zoom: 10, pitch: 0, duration: 1500 });
-      },
-      2: () => {
-        // 藍色螢光筆：定位飛往宜蘭/阿玉山稜線，並傾斜 45 度呈現山脈感
-        if (currentPopup) currentPopup.remove();
-        map.flyTo({
-          center: [121.65, 24.78], // 宜蘭阿玉山一帶
-          zoom: 11.5,
-          pitch: 45,
-          bearing: 20,
-          duration: 2000
-        });
-      },
-      3: () => {
-        // 回到全圖
-        if (currentPopup) currentPopup.remove();
-        map.flyTo({ center: [120.98, 23.8], zoom: 7.5, pitch: 0, duration: 1500 });
-      }
+      // 歷史演變特有地標
+      hengping: { center: [121.012, 24.615], zoom: 13.0, pitch: 25, bearing: 0, title: "橫屏背山原住地", desc: "原准要存置林野番號 19、20 所在地，因漢人無斷開墾紛爭於 1930 年解編。" },
+      banqiliao: { center: [120.985, 24.522], zoom: 13.5, pitch: 30, bearing: 0, title: "半奇寮溪移住地（46之三）", desc: "アミシ社移住後之增編準要存置林野地。" },
+      luchang: { center: [121.082, 24.551], zoom: 13.8, pitch: 50, bearing: 30, title: "鹿場警察官吏駐在所與鹿場埤圳", desc: "1931 年開墾埤圳供水田化，警務部門增設兩大塊保留地以利集團移住。" }
     };
 
-    // 4. 設定 Scrollama 滾動觸發
+    // 3. 點擊/觸發滑鼠懸浮時運行的地圖跳躍函數
+    function flyToLoc(key) {
+      const target = locations[key];
+      if (!target) return;
+
+      if (currentPopup) currentPopup.remove();
+
+      map.flyTo({
+        center: target.center,
+        zoom: target.zoom,
+        pitch: target.pitch,
+        bearing: target.bearing,
+        duration: 2000,
+        essential: true
+      });
+
+      // 於目標座標跳出歷史說明卡片
+      currentPopup = new maplibregl.Popup({ closeOnClick: true, offset: 25 })
+        .setLngLat(target.center)
+        .setHTML(`<h3>${target.title}</h3><p>${target.desc}</p>`)
+        .addTo(map);
+    }
+
+    // 4. 設定 Scrollama 自動監聽滾動觸發
+    const stepMapActions = {
+      0: () => flyToLoc('boundary'),
+      1: () => flyToLoc('map1'),
+      2: () => flyToLoc('stats'),
+      3: () => flyToLoc('garawan'),
+      4: () => flyToLoc('hengping'),
+      5: () => flyToLoc('luchang')
+    };
+
     const scroller = scrollama();
     scroller
-      .setup({
-        step: '.step',
-        offset: 0.5
-      })
+      .setup({ step: '.step', offset: 0.5 })
       .onStepEnter((response) => {
-        // 移除其他卡片的 active 狀態
         document.querySelectorAll('.step').forEach(el => el.classList.remove('is-active'));
         response.element.classList.add('is-active');
 
-        // 觸發對應地圖動作
-        const stepIndex = response.element.getAttribute('data-step');
-        if (stepActions[stepIndex]) {
-          stepActions[stepIndex]();
+        const stepIdx = response.element.getAttribute('data-step');
+        if (stepMapActions[stepIdx]) {
+          stepMapActions[stepIdx]();
         }
       });
 
