@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>森林計畫事業導讀 - 互動網頁</title>
+
+  <!-- 載入 MapLibre GL JS (免費開源地圖庫) -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+  <!-- 載入 Scrollama (滾動監聽庫) -->
+  <script src="https://unpkg.com/scrollama"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; color: #2c3e50; line-height: 1.8; background-color: #fdfbf7; }
+
+    /* 雙欄版面配置 */
+    #container { display: flex; flex-direction: row; min-height: 100vh; }
+    #story { width: 45vw; padding: 10vh 4vw; z-index: 2; }
+    #map-container { width: 55vw; height: 100vh; position: sticky; top: 0; background: #e0e0e0; }
+    #map { width: 100%; height: 100%; }
+
+    /* 文章滾動卡片樣式 */
+    .step {
+      margin-bottom: 75vh;
+      padding: 32px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      border-left: 6px solid #bdc3c7;
+      transition: all 0.3s ease;
+    }
+    .step.is-active { border-left-color: #2c3e50; transform: scale(1.02); }
+
+    /* 螢光筆對應動作樣式 */
+    .step.hl-yellow { border-left-color: #f1c40f; }
+    .step.hl-blue { border-left-color: #3498db; }
+
+    .marker-yellow { background-color: #fff3cd; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    .marker-blue { background-color: #d1ecf1; color: #0c5460; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+    /* 手機版響應式設計 */
+    @media (max-width: 768px) {
+      #container { flex-direction: column-reverse; }
+      #story { width: 100vw; padding: 20px; }
+      #map-container { width: 100vw; height: 50vh; position: sticky; top: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    
+    <!-- 左側：論文故事欄 -->
+    <div id="story">
+      
+      <!-- Step 0: 前言導覽 -->
+      <div class="step" data-step="0">
+        <h2>重現日治時代臺灣山林空間</h2>
+        <p>「森林計畫事業」是日治時期總督府針對臺灣山區森林土地所進行的一項重要政策，其目的在於「調查、計畫、實測、管理與經營可供應林業資源的國有森林地」。</p>
+      </div>
+
+      <!-- Step 1: 黃色螢光筆 (彈出史料卡片) -->
+      <div class="step hl-yellow" data-step="1">
+        <h2>第一手史料檔案</h2>
+        <p>透過來自森林計畫區分調查的第一手史料，保留了包含：<span class="marker-yellow">區分調查圖資逾146幅、《要存置林野調書》38冊，以及《準要存置林野調書》34冊</span>。</p>
+      </div>
+
+      <!-- Step 2: 藍色螢光筆 (地圖定位與線段高亮) -->
+      <div class="step hl-blue" data-step="2">
+        <h2>山脈與林道分佈</h2>
+        <p>礁溪以西沿著<span class="marker-blue">ブスラン山脈的山巔（大小礁溪山、阿玉山至紅柴林之間的稜線）</span>景致有如「翠蓋沖天，宛如巨人之髮」，呈現了日治初期林政與空間治理的演變。</p>
+      </div>
+
+      <div class="step" data-step="3">
+        <h2>結語</h2>
+        <p>正因為有這些歷史圖資與調查，才讓研究者得以在「行政空間」與「林政空間」之外，重構 1920 年代原住民族的生活空間。</p>
+      </div>
+
+    </div>
+
+    <!-- 右側：地圖欄 -->
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. 初始化免費的 MapLibre 地圖 (使用 Positron 淺色風格底圖)
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json', // 免費極簡底圖
+      center: [120.98, 23.8], // 臺灣中心座標
+      zoom: 7.2,
+      pitch: 0
+    });
+
+    let currentPopup = null;
+
+    // 2. 載入你的 GeoJSON 資料 (如果在 data/ 資料夾內有檔案)
+    map.on('load', () => {
+      /* 如果你有將 GeoJSON 上傳到 data/forest_roads.geojson，解除以下註解即可顯示線段：
+      map.addSource('roads', {
+        type: 'geojson',
+        data: './data/forest_roads.geojson'
+      });
+
+      map.addLayer({
+        id: 'roads-layer',
+        type: 'line',
+        source: 'roads',
+        paint: {
+          'line-color': '#e74c3c',
+          'line-width': 3
+        }
+      });
+      */
+    });
+
+    // 3. 定義滾動到各步驟時的地圖動作
+    const stepActions = {
+      0: () => {
+        // 全臺俯瞰
+        if (currentPopup) currentPopup.remove();
+        map.flyTo({ center: [120.98, 23.8], zoom: 7.2, pitch: 0, duration: 1500 });
+      },
+      1: () => {
+        // 黃色螢光筆：在地圖上跳出史料統計卡片
+        if (currentPopup) currentPopup.remove();
+        currentPopup = new maplibregl.Popup({ closeOnClick: false })
+          .setLngLat([121.51, 25.04]) // 台北總督府/林業局位置
+          .setHTML('<h3>典藏圖資成果</h3><p>• 區分調查圖資：146 幅<br>• 要存置林野調書：38 冊<br>• 準要存置林野調書：34 冊</p>')
+          .addTo(map);
+        
+        map.flyTo({ center: [121.51, 25.04], zoom: 10, pitch: 0, duration: 1500 });
+      },
+      2: () => {
+        // 藍色螢光筆：定位飛往宜蘭/阿玉山稜線，並傾斜 45 度呈現山脈感
+        if (currentPopup) currentPopup.remove();
+        map.flyTo({
+          center: [121.65, 24.78], // 宜蘭阿玉山一帶
+          zoom: 11.5,
+          pitch: 45,
+          bearing: 20,
+          duration: 2000
+        });
+      },
+      3: () => {
+        // 回到全圖
+        if (currentPopup) currentPopup.remove();
+        map.flyTo({ center: [120.98, 23.8], zoom: 7.5, pitch: 0, duration: 1500 });
+      }
+    };
+
+    // 4. 設定 Scrollama 滾動觸發
+    const scroller = scrollama();
+    scroller
+      .setup({
+        step: '.step',
+        offset: 0.5
+      })
+      .onStepEnter((response) => {
+        // 移除其他卡片的 active 狀態
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('is-active'));
+        response.element.classList.add('is-active');
+
+        // 觸發對應地圖動作
+        const stepIndex = response.element.getAttribute('data-step');
+        if (stepActions[stepIndex]) {
+          stepActions[stepIndex]();
+        }
+      });
+
+    window.addEventListener('resize', scroller.resize);
+  </script>
+</body>
+</html>
