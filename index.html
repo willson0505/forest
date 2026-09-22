@@ -1,851 +1,555 @@
 <script>
-
-/* =========================================================
-   MapLibre 初始化
-   ========================================================= */
-
 const map = new maplibregl.Map({
-
-  container: "map",
-
-  style:
-    "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-
+  container: 'map',
+  style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
   center: [120.98, 23.8],
-
   zoom: 7.2,
-
   pitch: 0,
-
-  bearing: 0,
-
-  renderWorldCopies: false,
-
-  maxPitch: 75
-
+  bearing: 0
 });
 
 
 /* =========================================================
-   GeoJSON 載入函式
+   GeoJSON 載入
    ========================================================= */
 
-async function fetchAndAddGeoJSON(filePath, sourceId) {
+async function loadGeoJSON(filename) {
+
+  const url = './' + encodeURIComponent(filename);
 
   try {
-
-    /*
-      GitHub Pages / 本地伺服器：
-      直接從目前 index.html 所在位置讀取。
-
-      encodeURI 很重要：
-      避免中文檔名在部分伺服器環境出問題。
-    */
-
-    const url = encodeURI(`./${filePath}`);
 
     const response = await fetch(url);
 
     if (!response.ok) {
-
-      console.error(
-        `GeoJSON 載入失敗：${filePath}`,
-        response.status
+      throw new Error(
+        filename + ' HTTP ' + response.status
       );
-
-      return null;
-
     }
 
     const data = await response.json();
 
-    /*
-      確認是不是合法 GeoJSON
-    */
-
-    if (
-      !data ||
-      data.type !== "FeatureCollection"
-    ) {
-
-      console.error(
-        `不是合法 FeatureCollection：${filePath}`
-      );
-
-      return null;
-
-    }
-
-
-    /*
-      加入 MapLibre source
-    */
-
-    if (!map.getSource(sourceId)) {
-
-      map.addSource(sourceId, {
-
-        type: "geojson",
-
-        data: data
-
-      });
-
-    }
-
-
-    console.log(
-      `GeoJSON 已載入：${filePath}`,
-      data.features.length,
-      "features"
-    );
-
-
     return data;
 
-  }
-
-  catch (error) {
+  } catch (error) {
 
     console.error(
-      `GeoJSON 讀取錯誤：${filePath}`,
+      'GeoJSON 載入失敗：',
+      filename,
       error
     );
 
     return null;
-
   }
-
 }
 
 
 /* =========================================================
-   地圖載入
+   Map Load
    ========================================================= */
 
-map.on("load", async () => {
-
-
-  /* =======================================================
-     1. 先載入所有 GeoJSON
-
-     注意：
-     GeoJSON 不依賴 DEM。
-     因此即使 3D 地形伺服器有問題，
-     這些圖層仍然必須正常顯示。
-     ======================================================= */
-
+map.on('load', async () => {
 
   /* -------------------------------------------------------
-     調查區界
+     1. 先建立所有 GeoJSON
+     不讓 DEM 問題阻止 GeoJSON
      ------------------------------------------------------- */
 
   const boundaryData =
-    await fetchAndAddGeoJSON(
-      "調查區界.geojson",
-      "boundary-src"
-    );
+    await loadGeoJSON('調查區界.geojson');
 
+  const yaoData =
+    await loadGeoJSON('南庄要存置林野.geojson');
+
+  const zhunyaoData =
+    await loadGeoJSON('南庄準要存置林野.geojson');
+
+  const buyaoData =
+    await loadGeoJSON('南庄不要存置林野.geojson');
+
+  const changeData =
+    await loadGeoJSON('南庄變動區.geojson');
+
+
+  /* =====================================================
+     2. 調查區界
+     ===================================================== */
 
   if (boundaryData) {
 
-
-    /*
-      全台調查區填色
-    */
+    map.addSource('boundary-src', {
+      type: 'geojson',
+      data: boundaryData
+    });
 
     map.addLayer({
-
-      id: "boundary-fill",
-
-      type: "fill",
-
-      source: "boundary-src",
+      id: 'boundary-fill',
+      type: 'fill',
+      source: 'boundary-src',
 
       paint: {
-
-        "fill-color": "#55745a",
-
-        "fill-opacity": 0.06
-
+        'fill-color': '#6b8e23',
+        'fill-opacity': 0.08
       }
+    });
 
+    map.addLayer({
+      id: 'boundary-line',
+      type: 'line',
+      source: 'boundary-src',
+
+      paint: {
+        'line-color': '#555555',
+        'line-width': 1.2,
+        'line-opacity': 0.8
+      }
     });
 
 
     /*
-      全台調查區界線
-    */
+     * 調查區名稱
+     *
+     * 你的調查區 GeoJSON 實際主要使用 layer 欄位，
+     * 不是 name / 區名。
+     */
 
     map.addLayer({
-
-      id: "boundary-line",
-
-      type: "line",
-
-      source: "boundary-src",
-
-      paint: {
-
-        "line-color": "#555555",
-
-        "line-width": 1.2,
-
-        "line-opacity": 0.85
-
-      }
-
-    });
-
-
-    /*
-      全台調查區名稱
-
-      你的調查區 GeoJSON 主要使用 layer 欄位，
-      因此最後 fallback 到 layer。
-    */
-
-    map.addLayer({
-
-      id: "boundary-label",
-
-      type: "symbol",
-
-      source: "boundary-src",
+      id: 'boundary-label',
+      type: 'symbol',
+      source: 'boundary-src',
 
       layout: {
 
-        "text-field": [
-
-          "coalesce",
-
-          ["get", "name"],
-
-          ["get", "區名"],
-
-          ["get", "NAME"],
-
-          ["get", "TITLE"],
-
-          ["get", "layer"],
-
-          ""
-
+        'text-field': [
+          'coalesce',
+          ['get', 'layer'],
+          ''
         ],
 
-        "text-size": 12,
+        'text-size': 12,
 
-        "text-font": [
-
-          "Open Sans Bold",
-          "Arial Unicode MS Bold"
-
+        'text-font': [
+          'Open Sans Regular',
+          'Arial Unicode MS Regular'
         ],
 
-        "text-allow-overlap": false
-
+        'text-allow-overlap': false
       },
 
       paint: {
 
-        "text-color": "#222222",
+        'text-color': '#222222',
 
-        "text-halo-color": "#ffffff",
+        'text-halo-color': '#ffffff',
 
-        "text-halo-width": 2
-
+        'text-halo-width': 2
       }
-
     });
 
+
+    /*
+     * 南庄發光外框
+     * 先隱藏，Step 1 才開
+     */
+
+    map.addLayer({
+      id: 'boundary-glow',
+      type: 'line',
+      source: 'boundary-src',
+
+      paint: {
+
+        'line-color': '#ffe600',
+
+        'line-width': 0,
+
+        'line-blur': 5,
+
+        'line-opacity': 0.95
+      }
+    });
   }
 
 
-  /* -------------------------------------------------------
-     南庄要存置林野
-     ------------------------------------------------------- */
-
-  const yaoData =
-    await fetchAndAddGeoJSON(
-      "南庄要存置林野.geojson",
-      "yao-src"
-    );
-
+  /* =====================================================
+     3. 南庄要存置林野
+     ===================================================== */
 
   if (yaoData) {
 
+    map.addSource('yao-src', {
+      type: 'geojson',
+      data: yaoData
+    });
+
     map.addLayer({
 
-      id: "yao-layer",
+      id: 'yao-layer',
 
-      type: "fill",
+      type: 'fill',
 
-      source: "yao-src",
+      source: 'yao-src',
 
       layout: {
-
-        visibility: "none"
-
+        visibility: 'none'
       },
 
       paint: {
 
-        "fill-color": "#2e7d32",
+        'fill-color': '#2e7d32',
 
-        "fill-opacity": 0.8,
+        'fill-opacity': 0.8,
 
-        "fill-outline-color": "#114b14"
-
+        'fill-outline-color': '#114b14'
       }
-
     });
-
   }
 
 
-  /* -------------------------------------------------------
-     南庄不要存置林野
-     ------------------------------------------------------- */
-
-  const buyaoData =
-    await fetchAndAddGeoJSON(
-      "南庄不要存置林野.geojson",
-      "buyao-src"
-    );
-
-
-  if (buyaoData) {
-
-    map.addLayer({
-
-      id: "buyao-layer",
-
-      type: "fill",
-
-      source: "buyao-src",
-
-      layout: {
-
-        visibility: "none"
-
-      },
-
-      paint: {
-
-        "fill-color": "#d32f2f",
-
-        "fill-opacity": 0.8,
-
-        "fill-outline-color": "#7f0000"
-
-      }
-
-    });
-
-  }
-
-
-  /* -------------------------------------------------------
-     南庄準要存置林野
-     ------------------------------------------------------- */
-
-  const zhunyaoData =
-    await fetchAndAddGeoJSON(
-      "南庄準要存置林野.geojson",
-      "zhunyao-src"
-    );
-
+  /* =====================================================
+     4. 南庄準要存置林野
+     ===================================================== */
 
   if (zhunyaoData) {
 
+    map.addSource('zhunyao-src', {
+      type: 'geojson',
+      data: zhunyaoData
+    });
+
     map.addLayer({
 
-      id: "zhunyao-layer",
+      id: 'zhunyao-layer',
 
-      type: "fill",
+      type: 'fill',
 
-      source: "zhunyao-src",
+      source: 'zhunyao-src',
 
       layout: {
-
-        visibility: "none"
-
+        visibility: 'none'
       },
 
       paint: {
 
-        "fill-color": "#ef6c00",
+        'fill-color': '#ef6c00',
 
-        "fill-opacity": 0.8,
+        'fill-opacity': 0.8,
 
-        "fill-outline-color": "#8c3b00"
-
+        'fill-outline-color': '#8c3b00'
       }
-
     });
 
 
-    /*
-      準要存置番號
-    */
+    /* 番號 */
 
     map.addLayer({
 
-      id: "zhunyao-label",
+      id: 'zhunyao-label',
 
-      type: "symbol",
+      type: 'symbol',
 
-      source: "zhunyao-src",
+      source: 'zhunyao-src',
 
       layout: {
 
-        visibility: "none",
+        visibility: 'none',
 
-        "text-field": [
-
-          "coalesce",
-
-          ["get", "番號"],
-
-          ["get", "number"],
-
-          ["get", "NO"],
-
-          ""
-
+        'text-field': [
+          'to-string',
+          ['get', '番號']
         ],
 
-        "text-size": 13,
+        'text-size': 13,
 
-        "text-font": [
-
-          "Open Sans Bold",
-          "Arial Unicode MS Bold"
-
+        'text-font': [
+          'Open Sans Bold',
+          'Arial Unicode MS Bold'
         ],
 
-        "text-allow-overlap": true
+        'text-allow-overlap': true,
 
+        'text-ignore-placement': true
       },
 
       paint: {
 
-        "text-color": "#ffffff",
+        'text-color': '#ffffff',
 
-        "text-halo-color": "#000000",
+        'text-halo-color': '#000000',
 
-        "text-halo-width": 2
-
+        'text-halo-width': 2
       }
-
     });
-
   }
 
 
-  /* -------------------------------------------------------
-     南庄變動區
-     ------------------------------------------------------- */
+  /* =====================================================
+     5. 南庄不要存置林野
+     ===================================================== */
 
-  const changeData =
-    await fetchAndAddGeoJSON(
-      "南庄變動區.geojson",
-      "change-src"
-    );
+  if (buyaoData) {
 
+    map.addSource('buyao-src', {
+      type: 'geojson',
+      data: buyaoData
+    });
+
+    map.addLayer({
+
+      id: 'buyao-layer',
+
+      type: 'fill',
+
+      source: 'buyao-src',
+
+      layout: {
+        visibility: 'none'
+      },
+
+      paint: {
+
+        'fill-color': '#d32f2f',
+
+        'fill-opacity': 0.8,
+
+        'fill-outline-color': '#7f0000'
+      }
+    });
+  }
+
+
+  /* =====================================================
+     6. 南庄變動區
+     ===================================================== */
 
   if (changeData) {
 
-    const changeFilter = [
-
-      "any",
-
-      ["==", ["get", "番號"], "46ノ三"],
-
-      ["==", ["get", "番號"], "46之三"],
-
-      ["in", "46ノ三", ["get", "番號"]]
-
-    ];
-
-
-    map.addLayer({
-
-      id: "change-layer",
-
-      type: "fill",
-
-      source: "change-src",
-
-      filter: changeFilter,
-
-      layout: {
-
-        visibility: "none"
-
-      },
-
-      paint: {
-
-        "fill-color": "#ef6c00",
-
-        "fill-opacity": 0.8,
-
-        "fill-outline-color": "#8c3b00"
-
-      }
-
+    map.addSource('change-src', {
+      type: 'geojson',
+      data: changeData
     });
 
-
     map.addLayer({
 
-      id: "change-label",
+      id: 'change-layer',
 
-      type: "symbol",
+      type: 'fill',
 
-      source: "change-src",
-
-      filter: changeFilter,
+      source: 'change-src',
 
       layout: {
-
-        visibility: "none",
-
-        "text-field": [
-
-          "coalesce",
-
-          ["get", "番號"],
-
-          ["get", "number"],
-
-          "46ノ三"
-
-        ],
-
-        "text-size": 14,
-
-        "text-font": [
-
-          "Open Sans Bold",
-          "Arial Unicode MS Bold"
-
-        ]
-
+        visibility: 'none'
       },
-
-      paint: {
-
-        "text-color": "#ffffff",
-
-        "text-halo-color": "#000000",
-
-        "text-halo-width": 2
-
-      }
-
-    });
-
-  }
-
-
-  /* =======================================================
-     2. 南庄調查區發光圖層
-
-     注意：
-     這裡不再猜測 layer 的名稱。
-
-     直接利用南庄的實際座標範圍做 filter，
-     避免因 GeoJSON 屬性名稱不同導致完全不亮。
-     ======================================================= */
-
-  if (map.getSource("boundary-src")) {
-
-    map.addLayer({
-
-      id: "boundary-nanzhuang-glow",
-
-      type: "line",
-
-      source: "boundary-src",
-
-      /*
-        南庄大約位於：
-        120.90～121.10
-        24.45～24.70
-
-        用 bbox 判斷南庄調查區。
-      */
 
       filter: [
+        'any',
 
-        "all",
+        ['==', ['to-string', ['get', '番號']], '46ノ三'],
 
-        [">=", ["at", 0, ["get", "bbox"]], 120.90]
-
+        ['==', ['to-string', ['get', '番號']], '46之三']
       ],
 
       paint: {
 
-        "line-color": "#ffe600",
+        'fill-color': '#ef6c00',
 
-        "line-width": 8,
+        'fill-opacity': 0.8,
 
-        "line-blur": 5,
-
-        "line-opacity": 0
-
+        'fill-outline-color': '#8c3b00'
       }
-
     });
 
-  }
-
-
-  /* =======================================================
-     3. 3D TERRAIN
-
-     放在 GeoJSON 全部載入完成之後。
-
-     即使 DEM 發生問題，
-     不會阻止前面的 GeoJSON。
-     ======================================================= */
-
-  try {
-
-    /*
-      Terrain DEM
-    */
-
-    map.addSource(
-      "taiwan-terrain",
-      {
-
-        type: "raster-dem",
-
-        url:
-          "https://tiles.mapterhorn.com/tilejson.json",
-
-        tileSize: 512,
-
-        encoding: "terrarium"
-
-      }
-    );
-
-
-    /*
-      Hillshade 使用另外一個 source。
-
-      MapLibre 官方 3D terrain 範例也是分開建立。
-    */
-
-    map.addSource(
-      "taiwan-hillshade",
-      {
-
-        type: "raster-dem",
-
-        url:
-          "https://tiles.mapterhorn.com/tilejson.json",
-
-        tileSize: 512,
-
-        encoding: "terrarium"
-
-      }
-    );
-
-
-    /*
-      真正 3D terrain
-    */
-
-    map.setTerrain({
-
-      source: "taiwan-terrain",
-
-      exaggeration: 1.15
-
-    });
-
-
-    /*
-      山體陰影
-    */
 
     map.addLayer({
 
-      id: "taiwan-hillshade",
+      id: 'change-label',
 
-      type: "hillshade",
+      type: 'symbol',
 
-      source: "taiwan-hillshade",
+      source: 'change-src',
+
+      layout: {
+
+        visibility: 'none',
+
+        'text-field': [
+          'to-string',
+          ['get', '番號']
+        ],
+
+        'text-size': 14,
+
+        'text-font': [
+          'Open Sans Bold',
+          'Arial Unicode MS Bold'
+        ],
+
+        'text-allow-overlap': true,
+
+        'text-ignore-placement': true
+      },
+
+      filter: [
+        'any',
+
+        ['==', ['to-string', ['get', '番號']], '46ノ三'],
+
+        ['==', ['to-string', ['get', '番號']], '46之三']
+      ],
 
       paint: {
 
-        "hillshade-shadow-color": "#473B24",
+        'text-color': '#ffffff',
 
-        "hillshade-highlight-color": "#ffffff",
+        'text-halo-color': '#000000',
 
-        "hillshade-exaggeration": 0.3
-
+        'text-halo-width': 2
       }
-
     });
-
-
-    console.log("3D terrain 載入完成");
-
   }
 
-  catch (error) {
 
-    /*
-      DEM 失敗只記錄錯誤，
-      不影響 GeoJSON。
-    */
+  /* =====================================================
+     7. 最後才加入 3D Terrain
+     
+     就算這裡失敗，也不會影響上面的 GeoJSON
+     ===================================================== */
+
+  try {
+
+    map.addSource('taiwan-dem', {
+
+      type: 'raster-dem',
+
+      url:
+        'https://demotiles.maplibre.org/terrain-tiles/tiles.json',
+
+      tileSize: 256,
+
+      maxzoom: 12
+    });
+
+    map.setTerrain({
+
+      source: 'taiwan-dem',
+
+      exaggeration: 1.5
+    });
+
+    map.addLayer({
+
+      id: 'terrain-hillshade',
+
+      type: 'hillshade',
+
+      source: 'taiwan-dem',
+
+      paint: {
+
+        'hillshade-exaggeration': 0.5
+      }
+    });
+
+  } catch (error) {
 
     console.warn(
-      "3D DEM 載入失敗，GeoJSON仍正常使用。",
+      '3D Terrain 載入失敗，但 GeoJSON 不受影響。',
       error
     );
 
   }
 
 
-  /* =======================================================
-     4. 初始視角
+  /* =====================================================
+     8. Terrain 放到所有 GeoJSON 底下
+     ===================================================== */
 
-     全台、2D
-     ======================================================= */
+  if (map.getLayer('terrain-hillshade')) {
 
-  map.jumpTo({
-
-    center: [120.98, 23.8],
-
-    zoom: 7.2,
-
-    pitch: 0,
-
-    bearing: 0
-
-  });
+    map.moveLayer(
+      'terrain-hillshade',
+      'boundary-fill'
+    );
+  }
 
 });
 
 
 /* =========================================================
-   圖層顯示 / 隱藏
+   圖層顯示控制
    ========================================================= */
 
-function setLayerVisibility(
-  layerId,
-  visible
-) {
+function setLayerVisibility(layerId, visible) {
 
-  if (!map.getLayer(layerId)) {
+  if (map.getLayer(layerId)) {
 
-    return;
+    map.setLayoutProperty(
 
-  }
+      layerId,
 
-  map.setLayoutProperty(
-
-    layerId,
-
-    "visibility",
-
-    visible
-      ? "visible"
-      : "none"
-
-  );
-
-}
-
-
-/* =========================================================
-   南庄發光
-   ========================================================= */
-
-function setNanzhuangHighlight(
-  visible
-) {
-
-  if (
-    map.getLayer(
-      "boundary-nanzhuang-glow"
-    )
-  ) {
-
-    map.setPaintProperty(
-
-      "boundary-nanzhuang-glow",
-
-      "line-opacity",
+      'visibility',
 
       visible
-        ? 0.95
-        : 0
-
+        ? 'visible'
+        : 'none'
     );
-
   }
-
 }
 
 
 /* =========================================================
-   [1]～[4]
+   Scrollama
    ========================================================= */
 
 const stepActions = {
 
 
-  /* =======================================================
+  /* -------------------------------------------------------
      [1]
      南庄調查區
-     2D
-     ======================================================= */
+     ------------------------------------------------------- */
 
   1: () => {
 
     setLayerVisibility(
-      "yao-layer",
+      'yao-layer',
       false
     );
 
     setLayerVisibility(
-      "buyao-layer",
+      'zhunyao-layer',
       false
     );
 
     setLayerVisibility(
-      "zhunyao-layer",
+      'buyao-layer',
       false
     );
 
     setLayerVisibility(
-      "zhunyao-label",
+      'zhunyao-label',
       false
     );
 
     setLayerVisibility(
-      "change-layer",
+      'change-layer',
       false
     );
 
     setLayerVisibility(
-      "change-label",
+      'change-label',
       false
     );
 
 
-    setNanzhuangHighlight(
-      true
-    );
+    if (map.getLayer('boundary-glow')) {
+
+      map.setPaintProperty(
+        'boundary-glow',
+        'line-width',
+        8
+      );
+    }
 
 
     map.flyTo({
@@ -862,52 +566,54 @@ const stepActions = {
       bearing: 0,
 
       duration: 2000
-
     });
-
   },
 
 
-  /* =======================================================
+  /* -------------------------------------------------------
      [2]
      三種林野
-     2D
-     ======================================================= */
+     ------------------------------------------------------- */
 
   2: () => {
 
-    setNanzhuangHighlight(
-      false
-    );
+    if (map.getLayer('boundary-glow')) {
+
+      map.setPaintProperty(
+        'boundary-glow',
+        'line-width',
+        0
+      );
+    }
 
 
     setLayerVisibility(
-      "yao-layer",
+      'yao-layer',
       true
     );
 
     setLayerVisibility(
-      "buyao-layer",
+      'zhunyao-layer',
       true
     );
 
     setLayerVisibility(
-      "zhunyao-layer",
+      'buyao-layer',
       true
     );
 
     setLayerVisibility(
-      "zhunyao-label",
+      'zhunyao-label',
       false
     );
 
     setLayerVisibility(
-      "change-layer",
+      'change-layer',
       false
     );
 
     setLayerVisibility(
-      "change-label",
+      'change-label',
       false
     );
 
@@ -926,51 +632,44 @@ const stepActions = {
       bearing: 0,
 
       duration: 1800
-
     });
-
   },
 
 
-  /* =======================================================
+  /* -------------------------------------------------------
      [3]
-     3D
-     ======================================================= */
+     3D + 番號
+     ------------------------------------------------------- */
 
   3: () => {
 
-    setNanzhuangHighlight(
-      false
-    );
-
-
     setLayerVisibility(
-      "yao-layer",
+      'yao-layer',
       true
     );
 
     setLayerVisibility(
-      "buyao-layer",
+      'zhunyao-layer',
       true
     );
 
     setLayerVisibility(
-      "zhunyao-layer",
+      'buyao-layer',
       true
     );
 
     setLayerVisibility(
-      "zhunyao-label",
+      'zhunyao-label',
       true
     );
 
     setLayerVisibility(
-      "change-layer",
+      'change-layer',
       false
     );
 
     setLayerVisibility(
-      "change-label",
+      'change-label',
       false
     );
 
@@ -984,56 +683,49 @@ const stepActions = {
 
       zoom: 13.8,
 
-      pitch: 58,
+      pitch: 60,
 
       bearing: -20,
 
       duration: 2200
-
     });
-
   },
 
 
-  /* =======================================================
+  /* -------------------------------------------------------
      [4]
-     46ノ三
-     ======================================================= */
+     46ノ三 / 46之三
+     ------------------------------------------------------- */
 
   4: () => {
 
-    setNanzhuangHighlight(
-      false
-    );
-
-
     setLayerVisibility(
-      "yao-layer",
+      'yao-layer',
       true
     );
 
     setLayerVisibility(
-      "buyao-layer",
+      'zhunyao-layer',
       true
     );
 
     setLayerVisibility(
-      "zhunyao-layer",
+      'buyao-layer',
       true
     );
 
     setLayerVisibility(
-      "zhunyao-label",
+      'zhunyao-label',
       true
     );
 
     setLayerVisibility(
-      "change-layer",
+      'change-layer',
       true
     );
 
     setLayerVisibility(
-      "change-label",
+      'change-label',
       true
     );
 
@@ -1052,11 +744,8 @@ const stepActions = {
       bearing: 10,
 
       duration: 2000
-
     });
-
   }
-
 };
 
 
@@ -1064,69 +753,51 @@ const stepActions = {
    Scrollama
    ========================================================= */
 
-const scroller =
-  scrollama();
-
+const scroller = scrollama();
 
 scroller
 
   .setup({
 
-    step: ".step-section",
+    step: '.step-section',
 
     offset: 0.5
-
   })
 
+  .onStepEnter((response) => {
 
-  .onStepEnter(
-    (response) => {
+    document
+      .querySelectorAll('.step-section')
+      .forEach(el => {
 
-      document
-        .querySelectorAll(
-          ".step-section"
-        )
-        .forEach(
-          (element) => {
-
-            element.classList.remove(
-              "is-active"
-            );
-
-          }
+        el.classList.remove(
+          'is-active'
         );
 
-
-      response
-        .element
-        .classList.add(
-          "is-active"
-        );
+      });
 
 
-      const step =
-        response
-          .element
-          .getAttribute(
-            "data-step"
-          );
+    response.element.classList.add(
+      'is-active'
+    );
 
 
-      if (
-        stepActions[step]
-      ) {
+    const stepIdx =
+      response.element
+        .getAttribute('data-step');
 
-        stepActions[step]();
 
-      }
+    if (stepActions[stepIdx]) {
+
+      stepActions[stepIdx]();
 
     }
-  );
+
+  });
 
 
 window.addEventListener(
-  "resize",
+  'resize',
   scroller.resize
 );
-
 </script>
