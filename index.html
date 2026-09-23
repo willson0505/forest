@@ -1,205 +1,2164 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>臺灣歷史林野調查地圖</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <style>
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-        }
 
-        #map {
-            width: 100%;
-            height: 100vh;
-            background: #f8f9fa;
-        }
+  <meta charset="UTF-8">
 
-        /* 全台調查區文字標籤樣式 */
-        .district-label {
-            background: rgba(255, 255, 255, 0.85);
-            border: 1px solid #666;
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #333;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            white-space: nowrap;
-        }
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-        /* 南庄調查區專屬高亮標籤 */
-        .nanzhuang-label {
-            background: #d9534f;
-            color: #ffffff;
-            border: 2px solid #fff;
-            font-size: 14px;
-            font-weight: bolder;
-            padding: 4px 8px;
-            box-shadow: 0 0 10px rgba(217, 83, 79, 0.8);
-        }
+  <title>
+    日治時期森林計畫事業區分調查史料──以南庄調查區為例
+  </title>
 
-        /* 南庄調查區發光動畫 (Pulse Glow Animation) */
-        @keyframes pulseGlow {
-            0% {
-                stroke: #ff3300;
-                stroke-width: 4px;
-                fill-opacity: 0.4;
-                filter: drop-shadow(0 0 3px #ff3300);
-            }
-            50% {
-                stroke: #ffcc00;
-                stroke-width: 8px;
-                fill-opacity: 0.7;
-                filter: drop-shadow(0 0 12px #ffcc00);
-            }
-            100% {
-                stroke: #ff3300;
-                stroke-width: 4px;
-                fill-opacity: 0.4;
-                filter: drop-shadow(0 0 3px #ff3300);
-            }
-        }
 
-        .glow-effect {
-            animation: pulseGlow 2s infinite ease-in-out;
-        }
+  <!-- =====================================================
+       MapLibre CSS
+       ===================================================== -->
 
-        /* 控制面板/說明盒 */
-        .info-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            max-width: 280px;
-        }
+  <link
+    href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css"
+    rel="stylesheet"
+  >
 
-        .info-panel h3 {
-            margin: 0 0 8px 0;
-            font-size: 16px;
-            color: #2c3e50;
-        }
 
-        .info-panel p {
-            margin: 4px 0;
-            font-size: 13px;
-            color: #555;
-            line-height: 1.4;
-        }
-    </style>
+  <style>
+
+    /* =====================================================
+       基本設定
+       ===================================================== */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #222222;
+
+      font-family:
+        "Microsoft JhengHei",
+        "Noto Sans TC",
+        sans-serif;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+
+    /* =====================================================
+       Scrollytelling 主體
+       ===================================================== */
+
+    #container {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+    }
+
+
+    /* =====================================================
+       左側文章
+       ===================================================== */
+
+    #article {
+
+      width: 50%;
+
+      padding:
+        70px
+        8vw
+        120px
+        8vw;
+
+      font-size: 18px;
+
+      line-height: 2;
+
+      background: #ffffff;
+    }
+
+
+    #article h1 {
+
+      margin:
+        0
+        0
+        55px
+        0;
+
+      font-size: 30px;
+
+      line-height: 1.55;
+
+      font-weight: 700;
+    }
+
+
+    #article p {
+
+      margin:
+        0
+        0
+        30px
+        0;
+    }
+
+
+    /* =====================================================
+       每個 Scrollytelling step
+       ===================================================== */
+
+    .step-section {
+
+      min-height: 90vh;
+
+      padding:
+        35px
+        0
+        35px
+        0;
+    }
+
+
+    .step-section.is-active {
+      opacity: 1;
+    }
+
+
+    /* =====================================================
+       右側地圖
+       ===================================================== */
+
+    #map-container {
+
+      position: sticky;
+
+      top: 0;
+
+      width: 50%;
+
+      height: 100vh;
+    }
+
+
+    #map {
+
+      width: 100%;
+
+      height: 100%;
+    }
+
+
+    /* =====================================================
+       手機版
+       ===================================================== */
+
+    @media (max-width: 900px) {
+
+      #container {
+
+        display: block;
+      }
+
+      #article {
+
+        width: 100%;
+
+        padding:
+          40px
+          25px
+          80px
+          25px;
+      }
+
+      #map-container {
+
+        position: sticky;
+
+        width: 100%;
+
+        height: 65vh;
+      }
+
+      .step-section {
+
+        min-height: 70vh;
+      }
+
+    }
+
+  </style>
+
 </head>
+
+
 <body>
+
+
+<div id="container">
+
+
+  <!-- =====================================================
+       左側文章
+       ===================================================== -->
+
+  <main id="article">
+
+
+    <h1>
+      《日治時期森林計畫事業區分調查史料》解讀──以南庄調查區為例
+    </h1>
+
+
+    <!-- ===================================================
+         STEP 1
+         =================================================== -->
+
+    <section
+      class="step-section"
+      data-step="1"
+    >
+
+      <p>
+        南庄調查區，是最早展開區分調查工作的調查區，其區域位於中港溪上游，範圍東以鵝公髻山、鳥嘴山、大窩山與鹿場大山的稜線為界：西從橫屏山下小東溪，接上舊蕃界；南從鹿場大山通過家裡山的分水嶺（及竹南與大湖的界野）：北從鵝公髻山向西，通過北埔溪與大東河間鞍部至橫屏山。
+      </p>
+
+      <p>
+        此一地帶除了有竹苗漢人開墾而成的市街，大多數林土地為原住民的傳統生活領域，大東河上游為泰雅族之勢力範圍，大東河下游至南河則為賽夏族的勢力範圍，但隨著漢人開墾擴張，到了1920至1930年代，此區只剩下「パアガサン社」、「ワロ社」、「ガラワン社」、「チューブス社」、以及應移住至該園的「アミシ社」等五個蕃社。
+      </p>
+
+      <p>
+        以下我們便以南庄調查區為例，來說明區分調查史料的內容及其可能的解讀方式，在解讀過程中，我們會將區分調查史料與《蕃人所要地調查書》一併參照來看。
+      </p>
+
+      <p>
+        森林計畫事業區分調查所產生的史料，包含《林野圖》及《林野調書》（土地臺帳）。《林野圖》是以總督府民政部警察本署製作、臺灣日日新報社發行的《蕃地地形圖》（5萬分1）為底圖，將區分結果以不同顏色或線條呈現於圖上。
+      </p>
+
+    </section>
+
+
+    <!-- ===================================================
+         STEP 2
+         =================================================== -->
+
+    <section
+      class="step-section"
+      data-step="2"
+    >
+
+      <p>
+        例如，南庄調查區的範圍介於3張《蕃地地形圖》之間，其《林野圖》也必須由3張地圖來構成，其中〈新第一號〉的底圖是「油羅山」（田尾第三號），〈新第二號〉是「シルビヤ山」（田尾第四號），〈新第三號〉則是「苗栗」（苗栗第一號）。
+      </p>
+
+      <p>
+        依據《林野圖》上的凡例，以綠色填滿的是「要存置林野」、橘色填滿的是「準要存置林野」、粉紅色填滿的是「不要存置林野」；綠色及粉紅色空心的圖樣，指的是林野整理事業時決定的要存置與不要存置林野，而藍色空心圖樣則是「許可地」：粉紅色斜線的區域是「保安林」，另外以紅色「保」字註記的，是要編入保安林的地域：以紅色「蕃」字註記的，是「蕃人用保留地域」：黑色實體線是調查區的地域界線，而紅色實體線是一塊塊林地的分界線。
+      </p>
+
+      <p>
+        《林野調書》的封面上，寫有該調書所紀載的土地屬於何州何郡，並以紅色墨筆書寫調書編號，編號之原則，是依據所屬州名以及屬於要存置或不要存置林野。例如，南庄調查區位於新竹州，其要存置林野調書便以〈新要第一號〉為編號；其準要存置林野調書則以〈新準第一號〉編號。
+      </p>
+
+      <p>
+        封面亦註明紙張頁數、調查期間以及調查員之姓名。調書內容則詳記每一個區分完成的土地所屬的郡名、庄名、大字與地名（通常不記）、番號、地種目、面積（單位：公頃）、區分理由、地況、及參考事項，其中參考事項類似備註欄，以文字概要註記區分、異動的情形，或是有何社蕃人幾人、是否設置駐在所等資訊。
+      </p>
+
+    </section>
+
+
+    <!-- ===================================================
+         STEP 3
+         =================================================== -->
+
+    <section
+      class="step-section"
+      data-step="3"
+    >
+
+      <p>
+        綜合《森林計畫事業報告書》以及南庄調查區的區分調查史料，我們可以得知南庄調查區的調查期間為大正15年（1926）3月11日至5月6日，當中包含15天的現地調查；調查成果製成有《林野圖》3幅（即〈新第一號〉至〈新第三號〉）、要存置林野調書1冊〈新要第一號〉及準要存置林野調書1冊〈新準第一號〉。
+      </p>
+
+      <p>
+        所調查的總面積總計為9,465.50公頃，其中3,044.54公頃屬於一般行政區域，6,420.97公頃則為蕃地，從中區分出要存置林野16筆（8,614.23公頃），準要存置林野31筆（833.27公頃），以及不要存置林野2筆（18公頃），調書上署名的主持調查員是山林課技師黑澤慎介，負責執行調查的調查班長則是伊藤鐵兒。
+      </p>
+
+      <p>
+        依照森林計畫事業區分調查的準則，南庄調查區的「準要存置林野調書」〈新準第一號〉與《林野圖》等區分調查史料當中，登記為「編號19至46之一」以及「調查區域外（イ）」的31筆準要存置林野土地，勢必與前述5社蕃人的生活空間息息相關，但我們在林野圖上只能知道這些準要存置林野的位置，而無法確知這31筆準要存置林野分別是屬於哪個蕃社。
+      </p>
+
+      <p>
+        此時，若將《蕃人所要地調查書》佐以對照，便可得到更進一步的蕃社資訊。
+      </p>
+
+    </section>
+
+
+    <!-- ===================================================
+         STEP 4
+         =================================================== -->
+
+    <section
+      class="step-section"
+      data-step="4"
+    >
+
+      <p>
+        首先，在區分調查《林野圖》〈新第一號〉之中，標記為番號19與20的兩塊準要存置林野土地的西側，可找到「橫屏社（アミシ）」的字樣，藉此可以推測，當大正15年（1926）3月區分調查班在南庄調查區開調查時，アミシ社還住在準要存置林野19及20西側、屬於南庄調查區範圍以外的橫屏背山一帶，而準要存置林野19及20，正是被保留下來以供アミシ社蕃人移住的土地。
+      </p>
+
+      <p>
+        然而，ワロ社的蕃人所要地指出，ワロ社與アミシ社本應該以橫屏背山的山腹地帶做為耕作與居住的保留地，但該片保留地歷年來已經被不少本島漢人「無斷開墾」，民蕃雜居下釀成紛爭不斷，因此在昭和5（1930）年，番號19與20兩塊保留地被解編，アミシ社則被移往至小坪駐在所管轄範圍內的半奇寮溪兩岸。
+      </p>
+
+      <p>
+        アミシ社的蕃人所在地調查亦指出，該社原住於大東河派出所北方橫屏背山之山腹，於昭和5（1930）末因民蕃雜居等問題而移住至「現在之地」，但在移住後因耕地狹小、水田不足，只能以甘藷、里芋充飢，或是充當林所林課在附近的要存置林野實施植林作業時的工人，憑工資勉強糊口。
+      </p>
+
+    </section>
+
+
+    <!-- ===================================================
+         STEP 5
+         =================================================== -->
+
+    <section
+      class="step-section"
+      data-step="5"
+    >
+
+      <p>
+        在南庄調查區《林野圖》〈新第三號〉中，可以發現準要存置林野番號46、46之一、46之二的右側，有一塊增編的「46之三」準要存置林野，其位置與アミシ社保留地的描述相當吻合，但這塊增編地的調查資料，並沒有被增列至準要存置林野調書中。
+      </p>
+
+      <p>
+        綜上可知，蕃人所要地調查中記載的823.27公頃，乃是將區分調查的查定面積中，扣掉總計53公頃、被解除保留的番號19、20要存置林野，再加上43公頃的「調查區域外（イ）」準要存置林野後，得出來的面積。
+      </p>
+
+      <p>
+        此外，透過蕃人所要地調查書，我們還可以看見理蕃事務所在森林計畫事業區分調查結束之後，對區分調查結果及保留地劃設的積極介入。
+      </p>
+
+      <p>
+        根據チューブス社蕃人所要地的調查紀錄，チューブス社大約在1880年代初期從竹東郡パスコワラン社移住至大東河溪兩岸，明治43年（1910）以總督府執行「五年理蕃事業」期間，チューブス社曾與其他部族合流、協力抗官，而往北坑溪流域避難，後來不堪勇線之封鎖，於大正元年（1912）提出「歸順」請求，得以返回大東河溪兩岸的原居地。
+      </p>
+
+      <p>
+        森林計畫事業區分調查期間，便將當時チューブス社散居的地域劃分為準要存置林野。然而，警務部門認為チューブス社的散居型態不利於官方的「指導命令」，便與新竹州當局共同制定計畫，要讓チューブス社實施集體移住與水田化。
+      </p>
+
+      <p>
+        昭和3年（1931）10月，官方在鹿場警察官吏駐在所附近開墾「鹿場埤圳」，圳水容量足以灌溉9甲水田，以供チューブス社蕃人學習水田耕作；到了昭和7年（1932）11月蕃人所要地調查期間，チューブス社的動向已被註記為「正於移往之途」。
+      </p>
+
+      <p>
+        據檢視南庄調查區的林野圖，可以發現在鹿場警察官吏駐在所一帶，確實也劃設了兩大塊增補的保留地，得以推論它們就是為了因應警務部門與州當局為チューブス社所安排的蕃人授產與集團移住，而再度增設的準要存置林野。
+      </p>
+
+      <p>
+        チューブス社的案例顯示，有關蕃人移住地與所要地的決斷權，似乎終究是由理蕃事務所與地方州廳機關所掌握，他們能夠提出主張來改動山林課的區分成果。即使，後續規劃的蕃人保留地仍以「準要存置林野」的規格來設置，其劃設之考量，已經與山林課初進行區分調查時的想法大異其趣。
+      </p>
+
+    </section>
+
+
+  </main>
+
+
+  <!-- =====================================================
+       右側地圖
+       ===================================================== -->
+
+  <aside id="map-container">
 
     <div id="map"></div>
 
-    <!-- 頁面說明面板 -->
-    <div class="info-panel">
-        <h3>南庄調查區與林野視角</h3>
-        <p><b>核心座標：</b>24.621941, 121.048094</p>
-        <p><b>重點展示：</b>南庄調查區、準要存置林野、第19/20區分預覽。</p>
-    </div>
+  </aside>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <script>
-        // 1. 初始化地圖，並設定定位座標 (Requirement [3])
-        // 座標：[24.621941, 121.048094]，Zoom level 設為 13.5 (包含準要存置林野與19,20區分)
-        const targetCoords = [24.621941, 121.048094];
-        const map = L.map('map').setView(targetCoords, 13);
 
-        // 載入底圖 (採用通用清晰底圖，可更換為歷史圖資或衛星圖)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
+</div>
 
-        // 2. 全台調查區範例資料 (Requirement [1] & [2])
-        // 實際使用時，可替換為您的 GeoJSON 檔或向量資料
-        const surveyDistricts = [
-            { name: "台北調查區", coords: [[25.00, 121.50], [25.10, 121.50], [25.10, 121.60], [25.00, 121.60]], isNanzhuang: false },
-            { name: "新竹調查區", coords: [[24.75, 120.90], [24.85, 120.90], [24.85, 121.05], [24.75, 121.05]], isNanzhuang: false },
-            { name: "台中調查區", coords: [[24.10, 120.60], [24.25, 120.60], [24.25, 120.75], [24.10, 120.75]], isNanzhuang: false },
-            { name: "嘉義調查區", coords: [[23.45, 120.40], [23.55, 120.40], [23.55, 120.55], [23.45, 120.55]], isNanzhuang: false },
-            
-            // [2] 南庄調查區範圍（範例多邊形圍繞指定座標）
-            { 
-                name: "南庄調查區", 
-                coords: [
-                    [24.650, 121.000],
-                    [24.650, 121.100],
-                    [24.580, 121.100],
-                    [24.580, 121.000]
-                ], 
-                isNanzhuang: true 
-            }
+
+
+<!-- =======================================================
+     MapLibre JS
+     ======================================================= -->
+
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+
+<!-- =======================================================
+     Scrollama JS
+     ======================================================= -->
+
+<script src="https://unpkg.com/scrollama@3.2.0/build/scrollama.min.js"></script>
+
+
+
+<script>
+
+
+/* =========================================================
+   1. 建立 MapLibre
+   ========================================================= */
+
+const map = new maplibregl.Map({
+
+  container: "map",
+
+  style:
+    "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+
+  center: [
+    120.98,
+    23.7
+  ],
+
+  zoom: 7,
+
+  pitch: 0,
+
+  bearing: 0,
+
+  attributionControl: true
+
+});
+
+
+
+/* =========================================================
+   2. 全域資料
+   ========================================================= */
+
+let boundaryData = null;
+
+let yaoData = null;
+
+let zhunyaoData = null;
+
+let buyaoData = null;
+
+let changeData = null;
+
+
+
+/* =========================================================
+   3. GeoJSON 載入
+   ========================================================= */
+
+async function loadGeoJSON(filename) {
+
+  const response =
+    await fetch(
+      "./" + encodeURIComponent(filename)
+    );
+
+  if (!response.ok) {
+
+    throw new Error(
+      filename +
+      " 載入失敗：" +
+      response.status
+    );
+
+  }
+
+  return await response.json();
+}
+
+
+
+/* =========================================================
+   4. Polygon Bounds
+   ========================================================= */
+
+function getFeatureBounds(feature) {
+
+  const bounds =
+    new maplibregl.LngLatBounds();
+
+
+  function walk(coords) {
+
+    if (!coords) {
+      return;
+    }
+
+
+    if (
+      typeof coords[0] === "number" &&
+      typeof coords[1] === "number"
+    ) {
+
+      bounds.extend(coords);
+
+      return;
+    }
+
+
+    coords.forEach(
+      child => walk(child)
+    );
+
+  }
+
+
+  walk(
+    feature.geometry.coordinates
+  );
+
+
+  return bounds;
+}
+
+
+
+/* =========================================================
+   5. 多個 Polygon 的共同 Bounds
+   ========================================================= */
+
+function getCombinedBounds(features) {
+
+  const bounds =
+    new maplibregl.LngLatBounds();
+
+
+  features.forEach(
+    feature => {
+
+      const featureBounds =
+        getFeatureBounds(feature);
+
+
+      if (
+        !featureBounds.isEmpty()
+      ) {
+
+        bounds.extend(
+          featureBounds.getSouthWest()
+        );
+
+        bounds.extend(
+          featureBounds.getNorthEast()
+        );
+
+      }
+
+    }
+  );
+
+
+  return bounds;
+}
+
+
+
+/* =========================================================
+   6. 依番號找 Polygon
+   ========================================================= */
+
+function getFeaturesByNumber(
+  geojson,
+  numbers
+) {
+
+  if (!geojson) {
+    return [];
+  }
+
+
+  return geojson.features.filter(
+    feature => {
+
+      const value =
+        String(
+          feature.properties?.["番號"] ?? ""
+        ).trim();
+
+
+      return numbers.includes(value);
+
+    }
+  );
+
+}
+
+
+
+/* =========================================================
+   7. Layer 顯示控制
+   ========================================================= */
+
+function setLayerVisibility(
+  layerId,
+  visible
+) {
+
+  if (!map.getLayer(layerId)) {
+    return;
+  }
+
+
+  map.setLayoutProperty(
+
+    layerId,
+
+    "visibility",
+
+    visible
+      ? "visible"
+      : "none"
+
+  );
+
+}
+
+
+
+/* =========================================================
+   8. 地圖 Load
+   ========================================================= */
+
+map.on(
+  "load",
+  async () => {
+
+
+    /* =====================================================
+       載入所有資料
+       ===================================================== */
+
+    try {
+
+      boundaryData =
+        await loadGeoJSON(
+          "調查區界.geojson"
+        );
+
+      yaoData =
+        await loadGeoJSON(
+          "南庄要存置林野.geojson"
+        );
+
+      zhunyaoData =
+        await loadGeoJSON(
+          "南庄準要存置林野.geojson"
+        );
+
+      buyaoData =
+        await loadGeoJSON(
+          "南庄不要存置林野.geojson"
+        );
+
+      changeData =
+        await loadGeoJSON(
+          "南庄變動區.geojson"
+        );
+
+    } catch (error) {
+
+      console.error(
+        "GeoJSON 載入錯誤：",
+        error
+      );
+
+      return;
+    }
+
+
+
+    /* =====================================================
+       找南庄調查區
+       ===================================================== */
+
+    const nanzhuangFeatures =
+      boundaryData.features.filter(
+        feature => {
+
+          const layer =
+            String(
+              feature.properties?.layer ?? ""
+            );
+
+          return layer.includes("南庄");
+
+        }
+      );
+
+
+
+    /* =====================================================
+       調查區界 Source
+       ===================================================== */
+
+    map.addSource(
+      "survey-boundary",
+      {
+
+        type: "geojson",
+
+        data: boundaryData
+
+      }
+    );
+
+
+
+    /* =====================================================
+       全台調查區底色
+       ===================================================== */
+
+    map.addLayer({
+
+      id: "survey-boundary-fill",
+
+      type: "fill",
+
+      source: "survey-boundary",
+
+      paint: {
+
+        "fill-color":
+          "#78866b",
+
+        "fill-opacity":
+          0.06
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       全台調查區邊界
+       ===================================================== */
+
+    map.addLayer({
+
+      id: "survey-boundary-line",
+
+      type: "line",
+
+      source: "survey-boundary",
+
+      paint: {
+
+        "line-color":
+          "#555555",
+
+        "line-width":
+          1.2,
+
+        "line-opacity":
+          0.75
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       全台調查區名稱
+       
+       所有名稱都顯示
+       ===================================================== */
+
+    map.addLayer({
+
+      id: "survey-boundary-label",
+
+      type: "symbol",
+
+      source: "survey-boundary",
+
+      layout: {
+
+        "text-field": [
+          "coalesce",
+          ["get", "layer"],
+          ""
+        ],
+
+        "text-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+
+          6,
+          9,
+
+          8,
+          11,
+
+          10,
+          13,
+
+          12,
+          15
+        ],
+
+        "text-font": [
+          "Open Sans Regular"
+        ],
+
+        "text-allow-overlap":
+          true,
+
+        "text-ignore-placement":
+          true,
+
+        "text-anchor":
+          "center"
+
+      },
+
+      paint: {
+
+        "text-color":
+          "#333333",
+
+        "text-halo-color":
+          "#ffffff",
+
+        "text-halo-width":
+          2
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       南庄專用 Source
+       ===================================================== */
+
+    map.addSource(
+
+      "nanzhuang-boundary",
+
+      {
+
+        type: "geojson",
+
+        data: {
+
+          type:
+            "FeatureCollection",
+
+          features:
+            nanzhuangFeatures
+
+        }
+
+      }
+
+    );
+
+
+
+    /* =====================================================
+       南庄光暈
+       ===================================================== */
+
+    map.addLayer({
+
+      id: "nanzhuang-glow",
+
+      type: "line",
+
+      source:
+        "nanzhuang-boundary",
+
+      paint: {
+
+        "line-color":
+          "#ffe000",
+
+        "line-width":
+          10,
+
+        "line-blur":
+          6,
+
+        "line-opacity":
+          0
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       南庄清楚外框
+       ===================================================== */
+
+    map.addLayer({
+
+      id: "nanzhuang-highlight",
+
+      type: "line",
+
+      source:
+        "nanzhuang-boundary",
+
+      paint: {
+
+        "line-color":
+          "#ffb700",
+
+        "line-width":
+          3,
+
+        "line-opacity":
+          0
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       南庄文字
+       ===================================================== */
+
+    map.addLayer({
+
+      id: "nanzhuang-title",
+
+      type: "symbol",
+
+      source:
+        "nanzhuang-boundary",
+
+      layout: {
+
+        "text-field":
+          "南庄調查區",
+
+        "text-size":
+          22,
+
+        "text-font": [
+          "Open Sans Bold"
+        ],
+
+        "text-anchor":
+          "center",
+
+        "text-allow-overlap":
+          true,
+
+        "text-ignore-placement":
+          true
+
+      },
+
+      paint: {
+
+        "text-color":
+          "#b77900",
+
+        "text-halo-color":
+          "#ffffff",
+
+        "text-halo-width":
+          4,
+
+        "text-opacity":
+          0
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       南庄要存置林野
+       ===================================================== */
+
+    map.addSource(
+
+      "yao-src",
+
+      {
+
+        type:
+          "geojson",
+
+        data:
+          yaoData
+
+      }
+
+    );
+
+
+    map.addLayer({
+
+      id:
+        "yao-layer",
+
+      type:
+        "fill",
+
+      source:
+        "yao-src",
+
+      layout: {
+
+        visibility:
+          "none"
+
+      },
+
+      paint: {
+
+        "fill-color":
+          "#258b3b",
+
+        "fill-opacity":
+          0.80,
+
+        "fill-outline-color":
+          "#145522"
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       南庄準要存置林野
+       ===================================================== */
+
+    map.addSource(
+
+      "zhunyao-src",
+
+      {
+
+        type:
+          "geojson",
+
+        data:
+          zhunyaoData
+
+      }
+
+    );
+
+
+    map.addLayer({
+
+      id:
+        "zhunyao-layer",
+
+      type:
+        "fill",
+
+      source:
+        "zhunyao-src",
+
+      layout: {
+
+        visibility:
+          "none"
+
+      },
+
+      paint: {
+
+        "fill-color":
+          "#ef8c1a",
+
+        "fill-opacity":
+          0.80,
+
+        "fill-outline-color":
+          "#a85500"
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       所有準要存置林野番號
+       ===================================================== */
+
+    map.addLayer({
+
+      id:
+        "zhunyao-label",
+
+      type:
+        "symbol",
+
+      source:
+        "zhunyao-src",
+
+      layout: {
+
+        visibility:
+          "none",
+
+        "text-field": [
+          "to-string",
+          ["get", "番號"]
+        ],
+
+        "text-size": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+
+          10,
+          11,
+
+          13,
+          14,
+
+          16,
+          17
+        ],
+
+        "text-font": [
+          "Open Sans Bold"
+        ],
+
+        "text-allow-overlap":
+          true,
+
+        "text-ignore-placement":
+          true
+
+      },
+
+      paint: {
+
+        "text-color":
+          "#ffffff",
+
+        "text-halo-color":
+          "#000000",
+
+        "text-halo-width":
+          2
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       南庄不要存置林野
+       ===================================================== */
+
+    map.addSource(
+
+      "buyao-src",
+
+      {
+
+        type:
+          "geojson",
+
+        data:
+          buyaoData
+
+      }
+
+    );
+
+
+    map.addLayer({
+
+      id:
+        "buyao-layer",
+
+      type:
+        "fill",
+
+      source:
+        "buyao-src",
+
+      layout: {
+
+        visibility:
+          "none"
+
+      },
+
+      paint: {
+
+        "fill-color":
+          "#d52f2f",
+
+        "fill-opacity":
+          0.80,
+
+        "fill-outline-color":
+          "#7e1515"
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       南庄變動區
+       ===================================================== */
+
+    map.addSource(
+
+      "change-src",
+
+      {
+
+        type:
+          "geojson",
+
+        data:
+          changeData
+
+      }
+
+    );
+
+
+    map.addLayer({
+
+      id:
+        "change-layer",
+
+      type:
+        "fill",
+
+      source:
+        "change-src",
+
+      layout: {
+
+        visibility:
+          "none"
+
+      },
+
+      filter: [
+
+        "any",
+
+        [
+          "==",
+          [
+            "to-string",
+            ["get", "番號"]
+          ],
+          "46ノ三"
+        ],
+
+        [
+          "==",
+          [
+            "to-string",
+            ["get", "番號"]
+          ],
+          "46之三"
+        ]
+
+      ],
+
+      paint: {
+
+        "fill-color":
+          "#ef8c1a",
+
+        "fill-opacity":
+          0.85,
+
+        "fill-outline-color":
+          "#a85500"
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       46之三 / 46ノ三 Label
+       ===================================================== */
+
+    map.addLayer({
+
+      id:
+        "change-label",
+
+      type:
+        "symbol",
+
+      source:
+        "change-src",
+
+      layout: {
+
+        visibility:
+          "none",
+
+        "text-field": [
+          "to-string",
+          ["get", "番號"]
+        ],
+
+        "text-size":
+          17,
+
+        "text-font": [
+          "Open Sans Bold"
+        ],
+
+        "text-allow-overlap":
+          true,
+
+        "text-ignore-placement":
+          true
+
+      },
+
+      filter: [
+
+        "any",
+
+        [
+          "==",
+          [
+            "to-string",
+            ["get", "番號"]
+          ],
+          "46ノ三"
+        ],
+
+        [
+          "==",
+          [
+            "to-string",
+            ["get", "番號"]
+          ],
+          "46之三"
+        ]
+
+      ],
+
+      paint: {
+
+        "text-color":
+          "#ffffff",
+
+        "text-halo-color":
+          "#000000",
+
+        "text-halo-width":
+          2
+
+      }
+
+    });
+
+
+
+    /* =====================================================
+       Terrain
+       
+       注意：
+       Terrain 在所有 GeoJSON 建立後才 setTerrain，
+       但 hillshade 放到最底層。
+       ===================================================== */
+
+    try {
+
+      map.addSource(
+
+        "taiwan-terrain",
+
+        {
+
+          type:
+            "raster-dem",
+
+          tiles: [
+            "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp"
+          ],
+
+          tileSize:
+            512,
+
+          maxzoom:
+            12,
+
+          encoding:
+            "terrarium"
+
+        }
+
+      );
+
+
+      map.addLayer({
+
+        id:
+          "terrain-hillshade",
+
+        type:
+          "hillshade",
+
+        source:
+          "taiwan-terrain",
+
+        paint: {
+
+          "hillshade-exaggeration":
+            0.45
+
+        }
+
+      }, "survey-boundary-fill");
+
+
+      map.setTerrain({
+
+        source:
+          "taiwan-terrain",
+
+        exaggeration:
+          1.35
+
+      });
+
+    } catch (error) {
+
+      console.warn(
+        "Terrain 載入失敗，GeoJSON 仍然正常使用。",
+        error
+      );
+
+    }
+
+
+
+    /* =====================================================
+       初始全台視圖
+       ===================================================== */
+
+    const allBounds =
+      new maplibregl.LngLatBounds();
+
+
+    function extendCoordinates(
+      coords
+    ) {
+
+      if (!coords) {
+        return;
+      }
+
+
+      if (
+        typeof coords[0] ===
+          "number" &&
+        typeof coords[1] ===
+          "number"
+      ) {
+
+        allBounds.extend(coords);
+
+        return;
+      }
+
+
+      coords.forEach(
+        child =>
+          extendCoordinates(child)
+      );
+
+    }
+
+
+    boundaryData.features.forEach(
+      feature => {
+
+        if (
+          feature.geometry &&
+          feature.geometry.coordinates
+        ) {
+
+          extendCoordinates(
+            feature.geometry.coordinates
+          );
+
+        }
+
+      }
+    );
+
+
+    if (!allBounds.isEmpty()) {
+
+      map.fitBounds(
+
+        allBounds,
+
+        {
+
+          padding:
+            60,
+
+          duration:
+            0
+
+        }
+
+      );
+
+    }
+
+  }
+
+);
+
+
+
+/* =========================================================
+   Scrollama
+   ========================================================= */
+
+const scroller =
+  scrollama();
+
+
+scroller.setup({
+
+  step:
+    ".step-section",
+
+  offset:
+    0.5,
+
+  progress:
+    false
+
+});
+
+
+
+/* =========================================================
+   STEP 1
+   全台 → 南庄
+   ========================================================= */
+
+scroller.onStepEnter(
+  response => {
+
+    const step =
+      response.element.dataset.step;
+
+
+
+    /* =====================================================
+       [1]
+       ===================================================== */
+
+    if (step === "1") {
+
+
+      /* ---------------------------------------------
+         南庄亮起
+         --------------------------------------------- */
+
+      if (
+        map.getLayer(
+          "nanzhuang-glow"
+        )
+      ) {
+
+        map.setPaintProperty(
+
+          "nanzhuang-glow",
+
+          "line-opacity",
+
+          0.95
+
+        );
+
+      }
+
+
+      if (
+        map.getLayer(
+          "nanzhuang-highlight"
+        )
+      ) {
+
+        map.setPaintProperty(
+
+          "nanzhuang-highlight",
+
+          "line-opacity",
+
+          1
+
+        );
+
+      }
+
+
+      if (
+        map.getLayer(
+          "nanzhuang-title"
+        )
+      ) {
+
+        map.setPaintProperty(
+
+          "nanzhuang-title",
+
+          "text-opacity",
+
+          1
+
+        );
+
+      }
+
+
+      /* ---------------------------------------------
+         2D
+         --------------------------------------------- */
+
+      map.flyTo({
+
+        center: [
+          121.03,
+          24.58
+        ],
+
+        zoom:
+          10.8,
+
+        pitch:
+          0,
+
+        bearing:
+          0,
+
+        duration:
+          2000
+
+      });
+
+    }
+
+
+
+    /* =====================================================
+       [2]
+       三種林野
+       ===================================================== */
+
+    if (step === "2") {
+
+
+      /* ---------------------------------------------
+         南庄邊界繼續保留
+         --------------------------------------------- */
+
+      if (
+        map.getLayer(
+          "nanzhuang-glow"
+        )
+      ) {
+
+        map.setPaintProperty(
+
+          "nanzhuang-glow",
+
+          "line-opacity",
+
+          0.30
+
+        );
+
+      }
+
+
+      if (
+        map.getLayer(
+          "nanzhuang-highlight"
+        )
+      ) {
+
+        map.setPaintProperty(
+
+          "nanzhuang-highlight",
+
+          "line-opacity",
+
+          0.7
+
+        );
+
+      }
+
+
+      /* ---------------------------------------------
+         三種林野
+         --------------------------------------------- */
+
+      setLayerVisibility(
+        "yao-layer",
+        true
+      );
+
+      setLayerVisibility(
+        "zhunyao-layer",
+        true
+      );
+
+      setLayerVisibility(
+        "buyao-layer",
+        true
+      );
+
+
+      /* ---------------------------------------------
+         番號先不要顯示
+         --------------------------------------------- */
+
+      setLayerVisibility(
+        "zhunyao-label",
+        false
+      );
+
+
+      /* ---------------------------------------------
+         2D
+         --------------------------------------------- */
+
+      map.flyTo({
+
+        center: [
+          121.03,
+          24.58
+        ],
+
+        zoom:
+          11.1,
+
+        pitch:
+          0,
+
+        bearing:
+          0,
+
+        duration:
+          1800
+
+      });
+
+    }
+
+
+
+    /* =====================================================
+       [3]
+       19 / 20 + 3D
+       ===================================================== */
+
+    if (step === "3") {
+
+
+      /* ---------------------------------------------
+         三種林野保持顯示
+         --------------------------------------------- */
+
+      setLayerVisibility(
+        "yao-layer",
+        true
+      );
+
+      setLayerVisibility(
+        "zhunyao-layer",
+        true
+      );
+
+      setLayerVisibility(
+        "buyao-layer",
+        true
+      );
+
+
+      /* ---------------------------------------------
+         所有準要存置林野番號
+         --------------------------------------------- */
+
+      setLayerVisibility(
+        "zhunyao-label",
+        true
+      );
+
+
+      /* ---------------------------------------------
+         隱藏 46之三
+         --------------------------------------------- */
+
+      setLayerVisibility(
+        "change-layer",
+        false
+      );
+
+      setLayerVisibility(
+        "change-label",
+        false
+      );
+
+
+      /* ---------------------------------------------
+         找 19 / 20
+         --------------------------------------------- */
+
+      const feature1920 =
+        getFeaturesByNumber(
+
+          zhunyaoData,
+
+          [
+            "19",
+            "20"
+          ]
+
+        );
+
+
+      /* ---------------------------------------------
+         指定視覺中心
+         --------------------------------------------- */
+
+      const targetCenter =
+        [
+          121.048094,
+          24.621941
         ];
 
-        // 3. 繪製所有調查區並設定標籤與發光效果
-        surveyDistricts.forEach(district => {
-            let polygonStyle = {
-                color: "#3388ff",
-                weight: 2,
-                fillColor: "#3388ff",
-                fillOpacity: 0.2
-            };
 
-            // 如果是南庄調查區，套用動態發光 Class (Requirement [2])
-            if (district.isNanzhuang) {
-                polygonStyle = {
-                    color: "#ff3300",
-                    weight: 5,
-                    fillColor: "#ff9900",
-                    fillOpacity: 0.5,
-                    className: "glow-effect" // 套用 CSS 發光效果
-                };
-            }
+      /* ---------------------------------------------
+         如果找到 19 / 20
+         自動計算共同範圍
+         --------------------------------------------- */
 
-            const poly = L.polygon(district.coords, polygonStyle).addTo(map);
+      if (
+        feature1920.length > 0
+      ) {
 
-            // [1] 常駐顯示所有調查區名稱
-            const labelClass = district.isNanzhuang ? "district-label nanzhuang-label" : "district-label";
-            poly.bindTooltip(district.isNanzhuang ? "📍 南庄調查區 (當前焦點)" : district.name, {
-                permanent: true,       // 永遠顯示
-                direction: "center",   // 置中於多邊形
-                className: labelClass  // 套用樣式
-            });
+        const bounds1920 =
+          getCombinedBounds(
+            feature1920
+          );
 
-            // 為南庄調查區新增預設開啟的 Popup
-            if (district.isNanzhuang) {
-                poly.bindPopup("<b>南庄調查區</b><br>此區域涵蓋準要存置林野與第 19、20 區分。").openPopup();
-            }
+
+        if (
+          !bounds1920.isEmpty()
+        ) {
+
+          /*
+           * 先計算一個能容納
+           * 19 + 20 的 zoom。
+           */
+
+          const camera =
+            map.cameraForBounds(
+
+              bounds1920,
+
+              {
+
+                padding: {
+
+                  top:
+                    120,
+
+                  bottom:
+                    120,
+
+                  left:
+                    100,
+
+                  right:
+                    100
+
+                },
+
+                pitch:
+                  55,
+
+                bearing:
+                  -20,
+
+                maxZoom:
+                  14.5
+
+              }
+
+            );
+
+
+          /*
+           * 使用計算出的 zoom，
+           * 但把視覺中心固定在
+           * 使用者指定的位置。
+           */
+
+          map.flyTo({
+
+            center:
+              targetCenter,
+
+            zoom:
+              Math.min(
+                camera.zoom,
+                14.2
+              ),
+
+            pitch:
+              55,
+
+            bearing:
+              -20,
+
+            duration:
+              2400
+
+          });
+
+        }
+
+      } else {
+
+        /*
+         * 找不到 19 / 20 時，
+         * 至少使用指定位置。
+         */
+
+        map.flyTo({
+
+          center:
+            targetCenter,
+
+          zoom:
+            13.2,
+
+          pitch:
+            55,
+
+          bearing:
+            -20,
+
+          duration:
+            2200
+
         });
 
-        // 4. [3] 標示「準要存置林野」與「19、20區分」示意位置 (確保於 24.621941, 121.048094 視角內可見)
-        const subFeatures = [
-            { name: "準要存置林野 (第19區分)", lat: 24.628, lng: 121.042 },
-            { name: "準要存置林野 (第20區分)", lat: 24.615, lng: 121.055 }
-        ];
+      }
 
-        subFeatures.forEach(feat => {
-            L.circleMarker([feat.lat, feat.lng], {
-                radius: 8,
-                color: "#27ae60",
-                fillColor: "#2ecc71",
-                fillOpacity: 0.8
-            }).addTo(map)
-            .bindTooltip(feat.name, { permanent: true, direction: "top", className: "district-label" });
-        });
+    }
 
-        // 地圖加載完畢後，確保精確鎖定座標視野
-        map.panTo(targetCoords);
-    </script>
+
+
+    /* =====================================================
+       [4]
+       46之三
+       ===================================================== */
+
+    if (step === "4") {
+
+
+      /* ---------------------------------------------
+         19 / 20 的內容仍保留
+         --------------------------------------------- */
+
+      setLayerVisibility(
+        "yao-layer",
+        true
+      );
+
+      setLayerVisibility(
+        "zhunyao-layer",
+        true
+      );
+
+      setLayerVisibility(
+        "buyao-layer",
+        true
+      );
+
+
+      setLayerVisibility(
+        "zhunyao-label",
+        true
+      );
+
+
+      /* ---------------------------------------------
+         顯示 46之三
+         --------------------------------------------- */
+
+      setLayerVisibility(
+        "change-layer",
+        true
+      );
+
+      setLayerVisibility(
+        "change-label",
+        true
+      );
+
+
+      /* ---------------------------------------------
+         找 46之三
+         --------------------------------------------- */
+
+      const changeFeatures =
+        changeData.features.filter(
+          feature => {
+
+            const number =
+              String(
+                feature.properties?.["番號"] ??
+                ""
+              ).trim();
+
+
+            return (
+
+              number ===
+                "46之三" ||
+
+              number ===
+                "46ノ三"
+
+            );
+
+          }
+        );
+
+
+      /* ---------------------------------------------
+         自動定位 46之三
+         --------------------------------------------- */
+
+      if (
+        changeFeatures.length > 0
+      ) {
+
+        const changeBounds =
+          getCombinedBounds(
+            changeFeatures
+          );
+
+
+        if (
+          !changeBounds.isEmpty()
+        ) {
+
+          const camera =
+            map.cameraForBounds(
+
+              changeBounds,
+
+              {
+
+                padding: 150,
+
+                pitch: 45,
+
+                bearing: 0,
+
+                maxZoom: 15
+
+              }
+
+            );
+
+
+          map.flyTo({
+
+            center:
+              camera.center,
+
+            zoom:
+              camera.zoom,
+
+            pitch:
+              45,
+
+            bearing:
+              0,
+
+            duration:
+              2200
+
+          });
+
+        }
+
+      }
+
+    }
+
+  }
+
+);
+
+
+
+/* =========================================================
+   視窗尺寸變化
+   ========================================================= */
+
+window.addEventListener(
+
+  "resize",
+
+  () => {
+
+    map.resize();
+
+    scroller.resize();
+
+  }
+
+);
+
+</script>
+
+
 </body>
+
 </html>
