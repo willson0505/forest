@@ -79,9 +79,6 @@ body {
     top: 0;
 
     background: #e5e3df;
-
-    /* 讓右上角控制器可以定位 */
-    position: sticky;
 }
 
 #map {
@@ -208,162 +205,6 @@ p {
 
 
 /* =========================================================
-   ★ 歷史底圖控制器
-========================================================= */
-
-#basemap-control {
-
-    position: absolute;
-
-    top: 15px;
-
-    right: 15px;
-
-    z-index: 10;
-
-    font-family:
-        "PingFang TC",
-        "Microsoft JhengHei",
-        "Noto Sans TC",
-        sans-serif;
-}
-
-
-/* ---------------------------------------------------------
-   摺疊按鈕
---------------------------------------------------------- */
-
-#basemap-toggle {
-
-    border: none;
-
-    background: rgba(255,255,255,0.95);
-
-    color: #333;
-
-    padding: 9px 13px;
-
-    border-radius: 5px;
-
-    box-shadow:
-        0 2px 8px rgba(0,0,0,0.18);
-
-    cursor: pointer;
-
-    font-size: 14px;
-
-    font-weight: 600;
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 7px;
-
-    transition:
-        background 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-#basemap-toggle:hover {
-
-    background: #ffffff;
-
-    box-shadow:
-        0 3px 10px rgba(0,0,0,0.25);
-}
-
-
-/* ---------------------------------------------------------
-   小箭頭
---------------------------------------------------------- */
-
-#basemap-arrow {
-
-    font-size: 11px;
-
-    transition:
-        transform 0.2s ease;
-}
-
-#basemap-control.open #basemap-arrow {
-
-    transform: rotate(180deg);
-}
-
-
-/* ---------------------------------------------------------
-   摺疊內容
---------------------------------------------------------- */
-
-#basemap-panel {
-
-    display: none;
-
-    margin-top: 6px;
-
-    width: 235px;
-
-    background: rgba(255,255,255,0.96);
-
-    border-radius: 6px;
-
-    padding: 12px;
-
-    box-shadow:
-        0 3px 12px rgba(0,0,0,0.2);
-}
-
-#basemap-control.open #basemap-panel {
-
-    display: block;
-}
-
-
-/* ---------------------------------------------------------
-   底圖標題
---------------------------------------------------------- */
-
-.basemap-title {
-
-    font-size: 13px;
-
-    font-weight: bold;
-
-    margin-bottom: 8px;
-
-    color: #333;
-}
-
-
-/* ---------------------------------------------------------
-   底圖選項
---------------------------------------------------------- */
-
-.basemap-option {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    font-size: 13px;
-
-    line-height: 1.5;
-
-    cursor: pointer;
-}
-
-.basemap-option input {
-
-    margin: 0;
-
-    cursor: pointer;
-}
-
-
-/* =========================================================
    手機
 ========================================================= */
 
@@ -387,18 +228,6 @@ p {
         position: sticky;
 
         top: 0;
-    }
-
-    #basemap-control {
-
-        top: 10px;
-
-        right: 10px;
-    }
-
-    #basemap-panel {
-
-        width: 210px;
     }
 
 }
@@ -504,12 +333,8 @@ p {
 
 <p>
 アミシ社的蕃人所在地調查亦指出，該社原住於大東河派出所北方橫屏背山之山腹，於昭和5（1930）末因民蕃雜居等問題而移住至「現在之地」，但在移住後因耕地狹小、水田不足，只能以甘藷、里芋充飢，或是充當林所林課在附近的要存置林野實施植林作業時的工人，憑工資勉強糊口。
-</p>
 
-<p>
-<span class="map-emphasis">
-在南庄調查區《林野圖》〈新第三號〉中，可以發現準要存置林野番號 46、46之一、46之二的右側，有一塊增編的「46之三」準要存置林野，其位置與アミシ社保留地的描述相當吻合，但這塊增編地的調查資料，並沒有被增列至準要存置林野調書中
-</span><span class="footnote-ref">[4]</span>。但綜上可知，蕃人所要地調查中記載的 823.27 公頃，乃是將區分調查的查定面積中，扣掉總計 53 公頃、被解除保留的番號 19、20 要存置林野，再加上 43 公頃的「調查區域外（イ）」準要存置林野後，得出來的面積。
+在南庄調查區《林野圖》〈新第三號〉中，可以發現準要存置林野番號 46、46之一、46之二的右側，有一塊增編的「46之三」準要存置林野，其位置與アミシ社保留地的描述相當吻合，但這塊增編地的調查資料，並沒有被增列至準要存置林野調書中<span class="footnote-ref">[4]</span>。但綜上可知，蕃人所要地調查中記載的 823.27 公頃，乃是將區分調查的查定面積中，扣掉總計 53 公頃、被解除保留的番號 19、20 要存置林野，再加上 43 公頃的「調查區域外（イ）」準要存置林野後，得出來的面積。
 </p>
 
 <p>
@@ -537,50 +362,6 @@ p {
 <div id="map-container">
 
 <div id="map"></div>
-
-
-<!-- =========================================================
-     ★ 底圖切換控制
-========================================================= -->
-
-<div id="basemap-control">
-
-    <button
-        id="basemap-toggle"
-        type="button"
-        aria-expanded="false"
-        aria-controls="basemap-panel"
-    >
-        <span>底圖</span>
-        <span id="basemap-arrow">▼</span>
-    </button>
-
-
-    <div id="basemap-panel">
-
-        <div class="basemap-title">
-            歷史底圖
-        </div>
-
-        <label class="basemap-option">
-
-            <input
-                type="checkbox"
-                id="basemap-1916"
-            >
-
-            <span>
-                1916－日治蕃地地形圖
-                <br>
-                <small>1:50,000</small>
-            </span>
-
-        </label>
-
-    </div>
-
-</div>
-
 
 </div>
 
@@ -672,6 +453,22 @@ async function loadJSON(url) {
 }
 
 
+/*
+    不再：
+
+    await A
+    await B
+    await C
+    await D
+
+    而是：
+
+    A ┐
+    B ├── 同時下載
+    C ┤
+    D ┘
+*/
+
 const geojsonPromise = Promise.all([
 
     loadJSON(DATA_PATHS.boundary),
@@ -691,11 +488,14 @@ const geojsonPromise = Promise.all([
    4. 地圖載入
 ========================================================= */
 
-map.on("load", async () {
+map.on("load", async () => {
 
 
     /* =====================================================
        4-1. 3D DEM
+       
+       AWS Terrain Tiles
+       Terrarium encoding
     ===================================================== */
 
     map.addSource("taiwan-dem", {
@@ -714,6 +514,13 @@ map.on("load", async () {
 
     });
 
+
+    /*
+       先不直接把 pitch 拉高。
+
+       初始仍然是 2D。
+       到 [3] 才真正看到 3D。
+    */
 
     map.setTerrain({
 
@@ -752,64 +559,7 @@ map.on("load", async () {
 
 
     /* =====================================================
-       ★ 4-3. 1916 歷史底圖
-       
-       中央研究院 WMTS
-       JM50K_1916
-    ===================================================== */
-
-    map.addSource(
-
-        "basemap-1916-src",
-
-        {
-
-            type: "raster",
-
-            tiles: [
-
-                "https://gis.sinica.edu.tw/tileserver/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=JM50K_1916&STYLE=_null&TILEMATRIXSET=GoogleMapsCompatible&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg"
-
-            ],
-
-            tileSize: 256,
-
-            minzoom: 0,
-
-            maxzoom: 19
-
-        }
-
-    );
-
-
-    map.addLayer({
-
-        id: "basemap-1916-layer",
-
-        type: "raster",
-
-        source: "basemap-1916-src",
-
-        layout: {
-
-            visibility: "none"
-
-        },
-
-        paint: {
-
-            "raster-opacity": 0.85,
-
-            "raster-fade-duration": 0
-
-        }
-
-    });
-
-
-    /* =====================================================
-       4-4. 等待所有 GeoJSON
+       4-3. 等待所有 GeoJSON
     ===================================================== */
 
     const [
@@ -828,7 +578,13 @@ map.on("load", async () {
 
 
     /* =====================================================
-       5. 調查區界
+       5. 調查區界.geojson
+       
+       ★ 最重要的修正：
+       
+       名稱欄位固定是：
+       
+       properties.layer
     ===================================================== */
 
     if (boundaryData) {
@@ -836,11 +592,18 @@ map.on("load", async () {
         map.addSource(
             "boundary-src",
             {
+
                 type: "geojson",
+
                 data: boundaryData
+
             }
         );
 
+
+        /* =================================================
+           5-1. 全台調查區填色
+        ================================================= */
 
         map.addLayer({
 
@@ -860,6 +623,10 @@ map.on("load", async () {
 
         });
 
+
+        /* =================================================
+           5-2. 全台調查區外框
+        ================================================= */
 
         map.addLayer({
 
@@ -881,6 +648,18 @@ map.on("load", async () {
 
         });
 
+
+        /* =================================================
+           5-3. ★ 所有調查區名稱
+           
+           固定使用 properties.layer
+           
+           不再猜：
+           name
+           NAME
+           TITLE
+           區名
+           ================================================= */
 
         map.addLayer({
 
@@ -923,6 +702,16 @@ map.on("load", async () {
                     "Arial Unicode MS Bold"
                 ],
 
+                /*
+                    非常重要：
+
+                    如果調查區很多，
+                    MapLibre 原本會因碰撞而隱藏文字。
+
+                    這裡要求：
+                    「所有名稱都顯示」
+                */
+
                 "text-allow-overlap": true,
 
                 "text-ignore-placement": true
@@ -941,6 +730,14 @@ map.on("load", async () {
 
         });
 
+
+        /* =================================================
+           5-4. ★ 南庄專用發光框
+           
+           精準指定：
+
+           properties.layer === "南庄調查區"
+        ================================================= */
 
         map.addLayer({
 
@@ -981,6 +778,10 @@ map.on("load", async () {
         });
 
 
+        /* =================================================
+           5-5. 南庄專用清楚外框
+        ================================================= */
+
         map.addLayer({
 
             id: "nanzhuang-line",
@@ -1018,6 +819,13 @@ map.on("load", async () {
         });
 
 
+        /* =================================================
+           5-6. 南庄名稱強調
+           
+           不是 popup。
+           是正式地圖 label。
+        ================================================= */
+
         map.addLayer({
 
             id: "nanzhuang-label",
@@ -1043,6 +851,7 @@ map.on("load", async () {
                 "text-field": [
 
                     "get",
+
                     "layer"
 
                 ],
@@ -1173,6 +982,10 @@ map.on("load", async () {
 
         });
 
+
+        /* =================================================
+           7-1. 所有準要存置林野番號
+        ================================================= */
 
         map.addLayer({
 
@@ -1380,6 +1193,10 @@ map.on("load", async () {
         });
 
 
+        /* =================================================
+           9-1. 46之三 label
+        ================================================= */
+
         map.addLayer({
 
             id: "change-label",
@@ -1471,6 +1288,12 @@ map.on("load", async () {
 
     /* =====================================================
        初始狀態
+       
+       全台
+       2D
+       所有調查區名稱
+       
+       不啟動任何故事動畫
     ===================================================== */
 
     map.jumpTo({
@@ -1576,7 +1399,6 @@ function hideForestLayers() {
     setLayerVisibility(
         "change-label",
         false
-
     );
 
 }
@@ -1589,9 +1411,23 @@ function hideForestLayers() {
 const stepActions = {
 
 
+    /* =====================================================
+       [1]
+       
+       全台調查區
+       →
+       南庄調查區發亮
+       →
+       2D
+       →
+       放大南庄
+    ===================================================== */
+
     "1": function () {
 
         hideForestLayers();
+
+        /* 南庄強調 */
 
         setLayerVisibility(
             "nanzhuang-glow",
@@ -1608,6 +1444,8 @@ const stepActions = {
             true
         );
 
+
+        /* 確保 2D */
 
         map.easeTo({
 
@@ -1628,6 +1466,21 @@ const stepActions = {
 
     },
 
+
+    /* =====================================================
+       [2]
+       
+       三種林野
+       
+       綠：
+       要存置
+
+       橘：
+       準要存置
+
+       紅：
+       不要存置
+    ===================================================== */
 
     "2": function () {
 
@@ -1675,6 +1528,19 @@ const stepActions = {
     },
 
 
+    /* =====================================================
+       [3]
+       
+       3D
+       
+       ★ 指定中心：
+       24.621941
+       121.048094
+       
+       顯示 19、20
+       同時所有番號顯示
+    ===================================================== */
+
     "3": function () {
 
         hideNanzhuangHighlight();
@@ -1711,6 +1577,15 @@ const stepActions = {
         );
 
 
+        /*
+            這裡是這一版最重要的定位：
+
+            使用者指定：
+
+            lat = 24.621941
+            lon = 121.048094
+        */
+
         map.easeTo({
 
             center: [
@@ -1732,6 +1607,12 @@ const stepActions = {
 
     },
 
+
+    /* =====================================================
+       [4]
+       
+       46之三
+    ===================================================== */
 
     "4": function () {
 
@@ -1814,6 +1695,10 @@ scroller
 
     .onStepEnter(function (response) {
 
+        /*
+            只處理指定的 [1] [2] [3] [4]
+        */
+
         document
             .querySelectorAll(".step-section")
             .forEach(function (element) {
@@ -1848,71 +1733,7 @@ scroller
 
 
 /* =========================================================
-   15. ★ 底圖摺疊控制
-========================================================= */
-
-const basemapControl =
-    document.getElementById(
-        "basemap-control"
-    );
-
-const basemapToggle =
-    document.getElementById(
-        "basemap-toggle"
-    );
-
-const basemap1916 =
-    document.getElementById(
-        "basemap-1916"
-    );
-
-
-/* ---------------------------------------------------------
-   點擊「底圖」
---------------------------------------------------------- */
-
-basemapToggle.addEventListener(
-    "click",
-    function () {
-
-        const isOpen =
-            basemapControl.classList.toggle(
-                "open"
-            );
-
-        basemapToggle.setAttribute(
-            "aria-expanded",
-            isOpen
-                ? "true"
-                : "false"
-        );
-
-    }
-);
-
-
-/* ---------------------------------------------------------
-   1916 底圖開關
---------------------------------------------------------- */
-
-basemap1916.addEventListener(
-    "change",
-    function () {
-
-        setLayerVisibility(
-
-            "basemap-1916-layer",
-
-            basemap1916.checked
-
-        );
-
-    }
-);
-
-
-/* =========================================================
-   16. Resize
+   15. Resize
 ========================================================= */
 
 window.addEventListener(
